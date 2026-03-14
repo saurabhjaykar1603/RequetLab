@@ -20,18 +20,18 @@ export default function App() {
   const [folders, setFolders] = useState([]);
   const [requests, setRequests] = useState([]);
   const [environments, setEnvironments] = useState([]);
-  
-  const [activeTab, setActiveTab] = useState('collections'); 
-  const [expanded, setExpanded] = useState({}); 
+
+  const [activeTab, setActiveTab] = useState('collections');
+  const [expanded, setExpanded] = useState({});
   const [activeRequest, setActiveRequest] = useState(null);
   const [activeEnvId, setActiveEnvId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [editorTab, setEditorTab] = useState('params'); 
+  const [editorTab, setEditorTab] = useState('params');
   const [response, setResponse] = useState(null);
   const [isSending, setIsSending] = useState(false);
 
-  const [modalOpen, setModalOpen] = useState(null); 
+  const [modalOpen, setModalOpen] = useState(null);
   const [modalData, setModalData] = useState({});
   const [theme, setTheme] = useState('dark');
 
@@ -56,21 +56,30 @@ export default function App() {
   const loadData = async () => {
     if (!user) return;
     try {
-      const [cols, flds, reqs, envs, wks] = await Promise.all([
-        api.getCollections(),
-        api.getFolders(),
-        api.getAllRequests(),
-        api.getEnvironments(),
-        api.getWorkspaces()
-      ]);
-      setCollections(cols || []);
-      setFolders(flds || []);
-      setRequests(reqs || []);
-      setEnvironments(envs || []);
+      // Always fetch workspaces
+      const wks = await api.getWorkspaces();
       setWorkspaces(wks || []);
 
-      if (wks && wks.length > 0 && !activeWorkspaceId) {
-        handleWorkspaceChange(wks[0].id);
+      let currentWorkspaceId = activeWorkspaceId;
+
+      // If no active workspace, pick the first one
+      if (wks && wks.length > 0 && !currentWorkspaceId) {
+        currentWorkspaceId = wks[0].id;
+        handleWorkspaceChange(currentWorkspaceId);
+      }
+
+      // Only fetch other data if we have a workspace ID
+      if (currentWorkspaceId) {
+        const [cols, flds, reqs, envs] = await Promise.all([
+          api.getCollections(),
+          api.getFolders(),
+          api.getAllRequests(),
+          api.getEnvironments()
+        ]);
+        setCollections(cols || []);
+        setFolders(flds || []);
+        setRequests(reqs || []);
+        setEnvironments(envs || []);
       }
     } catch (err) {
       console.error(err);
@@ -80,9 +89,7 @@ export default function App() {
 
   useEffect(() => {
     if (user) {
-      if (activeWorkspaceId) {
-        loadData();
-      }
+      loadData();
       fetchInvitations();
     }
   }, [user, activeWorkspaceId]);
@@ -130,10 +137,10 @@ export default function App() {
     try {
       const res = await api.deleteWorkspace(id);
       if (res.error) throw new Error(res.error);
-      
+
       const updatedWorkspaces = workspaces.filter(w => w.id !== id);
       setWorkspaces(updatedWorkspaces);
-      
+
       if (id === activeWorkspaceId) {
         if (updatedWorkspaces.length > 0) {
           handleWorkspaceChange(updatedWorkspaces[0].id);
@@ -146,7 +153,7 @@ export default function App() {
           setActiveRequest(null);
         }
       }
-      
+
       showToast({ message: 'Workspace deleted', type: 'success' });
       setModalOpen(null);
     } catch (err) {
@@ -160,7 +167,7 @@ export default function App() {
       const { workspaceId, email, role } = modalData;
       const res = await api.inviteMember(workspaceId, email, role || 'member');
       if (res.error) throw new Error(res.error);
-      
+
       showToast({ message: `Invited ${res.user.email} successfully!`, type: 'success' });
       setModalOpen('workspace-switch');
       setModalData({});
@@ -182,7 +189,7 @@ export default function App() {
     try {
       const res = await api.removeWorkspaceMember(workspaceId, userId);
       if (res.error) throw new Error(res.error);
-      
+
       showToast({ message: 'Member removed', type: 'success' });
       fetchMembers(workspaceId);
     } catch (err) {
@@ -204,7 +211,7 @@ export default function App() {
     try {
       const res = await api.respondToInvitation(invitationId, status);
       if (res.error) throw new Error(res.error);
-      
+
       showToast({ message: `Invitation ${status}`, type: 'success' });
       fetchInvitations();
       if (status === 'accepted') {
@@ -479,7 +486,7 @@ export default function App() {
     reader.onload = async (event) => {
       try {
         const data = JSON.parse(event.target.result);
-        
+
         // Handle Postman Environment
         if (data._postman_variable_scope === 'environment' || (data.values && Array.isArray(data.values) && data.name && !data.item)) {
           console.log("Importing Postman environment:", data.name);
@@ -494,7 +501,7 @@ export default function App() {
           setModalData({});
           return;
         }
-        
+
         const parsePostmanBody = (body) => {
           if (!body) return { type: 'none', content: '' };
           if (body.mode === 'raw') return { type: 'json', content: body.raw || '' };
@@ -544,7 +551,7 @@ export default function App() {
               const folderName = currentFolderName ? `${currentFolderName} / ${item.name}` : item.name;
               const folderRequests = [];
               const subItems = [];
-              
+
               // We'll flatten internal folders for now
               const extractRequests = (subItemsList) => {
                 subItemsList.forEach(si => {
@@ -562,9 +569,9 @@ export default function App() {
                   }
                 });
               };
-              
+
               extractRequests(item.item);
-              
+
               if (folderRequests.length > 0) {
                 importTree.folders.push({
                   name: folderName,
@@ -611,7 +618,7 @@ export default function App() {
       const replaceVars = (str) => {
         if (!str || typeof str !== 'string') return str;
         let res = str;
-        
+
         // Match {{variable_name}}
         const regex = /{{(.*?)}}/g;
         res = res.replace(regex, (match, key) => {
@@ -625,7 +632,7 @@ export default function App() {
           }
           return match; // Return as is if not found
         });
-        
+
         return res;
       };
 
@@ -633,14 +640,14 @@ export default function App() {
       const subHeaders = (activeRequest.headers || []).map(h => ({ ...h, value: replaceVars(h.value) }));
       const subParams = (activeRequest.params || []).map(p => ({ ...p, value: replaceVars(p.value) }));
       let subBody = typeof activeRequest.body === 'string' ? replaceVars(activeRequest.body) : activeRequest.body;
-      
+
       if (typeof activeRequest.body === 'object' && activeRequest.body !== null) {
         if (activeRequest.body.type === 'json' && activeRequest.body.content) {
           subBody = { ...activeRequest.body, content: replaceVars(activeRequest.body.content) };
         } else if (activeRequest.body.type === 'form-data' && Array.isArray(activeRequest.body.content)) {
-          subBody = { 
-            ...activeRequest.body, 
-            content: activeRequest.body.content.map(f => ({ ...f, value: replaceVars(f.value) })) 
+          subBody = {
+            ...activeRequest.body,
+            content: activeRequest.body.content.map(f => ({ ...f, value: replaceVars(f.value) }))
           };
         }
       }
@@ -666,7 +673,7 @@ export default function App() {
       <Route path="/signup" element={!user ? <Signup onSignupSuccess={setUser} /> : <Navigate to="/" />} />
       <Route path="/" element={user ? (
         <>
-          <Dashboard 
+          <Dashboard
             user={user}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
@@ -709,7 +716,7 @@ export default function App() {
             handleSendRequest={handleSendRequest}
           />
 
-          <Modals 
+          <Modals
             modalOpen={modalOpen}
             setModalOpen={setModalOpen}
             modalData={modalData}
