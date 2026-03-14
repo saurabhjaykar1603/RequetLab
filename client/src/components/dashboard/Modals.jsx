@@ -1,4 +1,5 @@
-import { X, Box, Trash2, AlertTriangle } from 'lucide-react';
+import React from 'react';
+import { X, Box, Trash2, AlertTriangle, UserPlus, Users } from 'lucide-react';
 
 const Modals = ({
   modalOpen,
@@ -12,10 +13,15 @@ const Modals = ({
   handleCreateWorkspace,
   handleWorkspaceChange,
   handleDeleteWorkspace,
+  handleInviteMember,
+  workspaceMembers,
+  fetchMembers,
+  handleRemoveMember,
   collections,
   folders,
   workspaces,
-  activeWorkspaceId
+  activeWorkspaceId,
+  currentUser
 }) => {
   if (!modalOpen) return null;
 
@@ -203,21 +209,171 @@ const Modals = ({
                       <div style={{fontSize: '11px', color: 'var(--text-secondary)'}}>{w.type}</div>
                     </div>
                   </div>
-                  <button 
-                    className="icon-btn delete-hover" 
-                    onClick={(e) => { 
-                      e.stopPropagation(); 
-                      setModalData({ ...modalData, workspaceToDelete: w });
-                      setModalOpen('workspace-delete-confirm');
-                    }}
-                    title="Delete Workspace"
-                    style={{ padding: '6px', color: 'var(--text-secondary)' }}
-                  >
-                    <Trash2 size={14} />
-                  </button>
+                  <div style={{ display: 'flex', gap: '4px' }}>
+                    {w.type === 'team' && (
+                      <>
+                        <button 
+                          className="icon-btn" 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setModalData({ ...modalData, workspaceId: w.id, workspaceName: w.name, email: '', role: 'member' });
+                            setModalOpen('invite-member');
+                          }}
+                          title="Invite Member"
+                          style={{ padding: '6px' }}
+                        >
+                          <UserPlus size={14} />
+                        </button>
+                        <button 
+                          className="icon-btn" 
+                          onClick={(e) => { 
+                            e.stopPropagation(); 
+                            setModalData({ ...modalData, workspaceId: w.id, workspaceName: w.name });
+                            fetchMembers(w.id);
+                            setModalOpen('workspace-members');
+                          }}
+                          title="Manage Members"
+                          style={{ padding: '6px' }}
+                        >
+                          <Users size={14} />
+                        </button>
+                      </>
+                    )}
+                    <button 
+                      className="icon-btn delete-hover" 
+                      onClick={(e) => { 
+                        e.stopPropagation(); 
+                        setModalData({ ...modalData, workspaceToDelete: w });
+                        setModalOpen('workspace-delete-confirm');
+                      }}
+                      title="Delete Workspace"
+                      style={{ padding: '6px', color: 'var(--text-secondary)' }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {modalOpen === 'workspace-members' && (
+        <div className="modal-overlay" onClick={() => setModalOpen('workspace-switch')}>
+          <div className="modal" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Members of {modalData.workspaceName}</h3>
+              <button className="icon-btn" onClick={() => setModalOpen('workspace-switch')}><X size={18}/></button>
+            </div>
+            <div className="modal-body" style={{ padding: '0' }}>
+              <div className="members-list">
+                {workspaceMembers.map(member => {
+                  const isAdmin = workspaceMembers.find(m => m.id === currentUser?.id)?.role === 'admin';
+                  const isSelf = member.id === currentUser?.id;
+
+                  return (
+                    <div key={member.id} className="member-item" style={{ 
+                      display: 'flex', 
+                      justifyContent: 'space-between', 
+                      alignItems: 'center',
+                      padding: '12px 20px',
+                      borderBottom: '1px solid var(--border-color)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <div className="avatar" style={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '50%',
+                          background: 'var(--accent-color)',
+                          color: 'white',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {member.name.charAt(0).toUpperCase()}
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '14px', fontWeight: 500 }}>
+                            {member.name} {isSelf && <span style={{ color: 'var(--text-secondary)', fontSize: '11px', fontWeight: 'normal' }}>(You)</span>}
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{member.email}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <span style={{ 
+                          fontSize: '11px', 
+                          padding: '2px 8px', 
+                          borderRadius: '12px', 
+                          background: member.role === 'admin' ? 'rgba(239, 104, 25, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+                          color: member.role === 'admin' ? 'var(--accent-color)' : 'var(--text-secondary)',
+                          border: member.role === 'admin' ? '1px solid var(--accent-color)' : '1px solid transparent'
+                        }}>
+                          {member.role}
+                        </span>
+                        {isAdmin && !isSelf && (
+                          <button 
+                            className="icon-btn delete-hover" 
+                            onClick={() => handleRemoveMember(modalData.workspaceId, member.id)}
+                            title="Remove Member"
+                            style={{ padding: '4px' }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+            <div className="modal-footer" style={{ justifyContent: 'center' }}>
+              <button className="btn-primary" style={{ width: '100%' }} onClick={() => setModalOpen('invite-member')}>
+                Invite New Member
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalOpen === 'invite-member' && (
+        <div className="modal-overlay" onClick={() => setModalOpen('workspace-switch')}>
+          <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Invite to {modalData.workspaceName}</h3>
+              <button className="icon-btn" onClick={() => setModalOpen('workspace-switch')}><X size={18}/></button>
+            </div>
+            <form onSubmit={handleInviteMember}>
+              <div className="modal-body" style={{ padding: '20px' }}>
+                <div className="form-group">
+                  <label>Friend's Email</label>
+                  <input 
+                    autoFocus 
+                    type="email" 
+                    required 
+                    placeholder="name@example.com"
+                    value={modalData.email || ''} 
+                    onChange={e => setModalData({ ...modalData, email: e.target.value })} 
+                  />
+                </div>
+                <div className="form-group" style={{ marginTop: '16px' }}>
+                  <label>Role</label>
+                  <select 
+                    value={modalData.role || 'member'} 
+                    onChange={e => setModalData({ ...modalData, role: e.target.value })}
+                  >
+                    <option value="member">Member</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setModalOpen('workspace-switch')}>Cancel</button>
+                <button type="submit" className="btn-primary">Send Invite</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

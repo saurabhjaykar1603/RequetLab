@@ -48,3 +48,14 @@ export const getWorkspaceMembers = async (workspaceId: string) => {
   `;
   return await getQuery<any>(sql, [workspaceId]);
 };
+
+export const getMemberRole = async (workspaceId: string, userId: string): Promise<string | undefined> => {
+  const sql = 'SELECT role FROM workspace_members WHERE "workspaceId" = $1 AND "userId" = $2';
+  const res = await getSingleQuery<{ role: string }>(sql, [workspaceId, userId]);
+  return res?.role;
+};
+
+export const removeMemberFromWorkspace = async (workspaceId: string, userId: string) => {
+  const sql = 'DELETE FROM workspace_members WHERE "workspaceId" = $1 AND "userId" = $2';
+  await runQuery(sql, [workspaceId, userId]);
+};

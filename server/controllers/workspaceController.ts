@@ -1,10 +1,11 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import * as workspaceRepository from '../repositories/workspaceRepository.ts';
+import * as authRepository from '../repositories/authRepository.ts';
 
 export const createWorkspace = async (request: FastifyRequest<{ Body: { name: string; type?: 'personal' | 'team' } }>, reply: FastifyReply) => {
   try {
     const { name, type } = request.body;
-    const userId = (request as any).user.id; // Will be populated by auth middleware
+    const userId = (request as any).user.id; 
     const workspace = await workspaceRepository.createWorkspace(name, userId, type);
     return reply.status(201).send(workspace);
   } catch (error: any) {
@@ -32,11 +33,46 @@ export const getWorkspaceMembers = async (request: FastifyRequest<{ Params: { id
   }
 };
 
-export const addMember = async (request: FastifyRequest<{ Params: { id: string }; Body: { userId: string; role?: 'admin' | 'member' } }>, reply: FastifyReply) => {
+export const addMember = async (request: FastifyRequest<{ Params: { id: string }; Body: { email: string; role?: 'admin' | 'member' } }>, reply: FastifyReply) => {
   try {
     const { id } = request.params;
-    const { userId, role } = request.body;
-    await workspaceRepository.addMemberToWorkspace(id, userId, role);
+    const { email, role } = request.body;
+
+    // 1. Check if workspace exists and is a team workspace
+    const workspace = await workspaceRepository.findWorkspaceById(id);
+    if (!workspace) return reply.status(404).send({ error: 'Workspace not found' });
+    if (workspace.type === 'personal') return reply.status(400).send({ error: 'Personal workspaces cannot have additional members' });
+
+    // 2. Find user by email
+    const user = await authRepository.findUserByEmail(email);
+    if (!user) return reply.status(404).send({ error: 'User with this email not found' });
+
+    // 3. Add member
+    await workspaceRepository.addMemberToWorkspace(id, user.id, role);
+    return { success: true, user: { name: user.name, email: user.email } };
+  } catch (error: any) {
+    return reply.status(500).send({ error: error.message });
+  }
+};
+
+export const removeMember = async (request: FastifyRequest<{ Params: { id: string; userId: string } }>, reply: FastifyReply) => {
+  try {
+    const { id, userId } = request.params;
+    const requesterId = (request as any).user.id;
+
+    // 1. Check if requester is admin
+    const requesterRole = await workspaceRepository.getMemberRole(id, requesterId);
+    if (requesterRole !== 'admin') {
+      return reply.status(403).send({ error: 'Only admins can remove members' });
+    }
+
+    // 2. Prevent self-removal
+    if (requesterId === userId) {
+      return reply.status(400).send({ error: 'Admins cannot remove themselves' });
+    }
+
+    // 3. Remove member
+    await workspaceRepository.removeMemberFromWorkspace(id, userId);
     return { success: true };
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });

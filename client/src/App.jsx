@@ -38,6 +38,7 @@ export default function App() {
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
   const [workspaces, setWorkspaces] = useState([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem('activeWorkspaceId') || '');
+  const [workspaceMembers, setWorkspaceMembers] = useState([]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -132,6 +133,42 @@ export default function App() {
       
       showToast({ message: 'Workspace deleted', type: 'success' });
       setModalOpen(null);
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
+  const handleInviteMember = async (e) => {
+    e.preventDefault();
+    try {
+      const { workspaceId, email, role } = modalData;
+      const res = await api.inviteMember(workspaceId, email, role || 'member');
+      if (res.error) throw new Error(res.error);
+      
+      showToast({ message: `Invited ${res.user.email} successfully!`, type: 'success' });
+      setModalOpen('workspace-switch');
+      setModalData({});
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
+  const fetchMembers = async (workspaceId) => {
+    try {
+      const members = await api.getWorkspaceMembers(workspaceId);
+      setWorkspaceMembers(members || []);
+    } catch (err) {
+      showToast({ message: 'Failed to fetch members', type: 'error' });
+    }
+  };
+
+  const handleRemoveMember = async (workspaceId, userId) => {
+    try {
+      const res = await api.removeWorkspaceMember(workspaceId, userId);
+      if (res.error) throw new Error(res.error);
+      
+      showToast({ message: 'Member removed', type: 'success' });
+      fetchMembers(workspaceId);
     } catch (err) {
       showToast({ message: err.message, type: 'error' });
     }
@@ -469,6 +506,11 @@ export default function App() {
             workspaces={workspaces}
             activeWorkspaceId={activeWorkspaceId}
             handleDeleteWorkspace={handleDeleteWorkspace}
+            handleInviteMember={handleInviteMember}
+            workspaceMembers={workspaceMembers}
+            fetchMembers={fetchMembers}
+            handleRemoveMember={handleRemoveMember}
+            currentUser={user}
           />
         </>
       ) : <Navigate to="/login" />} />

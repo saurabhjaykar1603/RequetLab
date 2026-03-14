@@ -52,6 +52,27 @@ export const api = {
     });
     return res.json();
   },
+  inviteMember: async (workspaceId, email, role = 'member') => {
+    const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members`, {
+      method: 'POST',
+      headers: getPostHeaders(),
+      body: JSON.stringify({ email, role })
+    });
+    return res.json();
+  },
+  getWorkspaceMembers: async (workspaceId) => {
+    const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members`, {
+      headers: getHeaders()
+    });
+    return res.json();
+  },
+  removeWorkspaceMember: async (workspaceId, userId) => {
+    const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members/${userId}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    return res.json();
+  },
 
   // Collections
   getCollections: async () => {
