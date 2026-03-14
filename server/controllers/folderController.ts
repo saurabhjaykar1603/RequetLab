@@ -4,11 +4,12 @@ import * as folderRepository from '../repositories/folderRepository.ts';
 export const getFolders = async (request: FastifyRequest<{ Querystring: { collectionId?: string } }>, reply: FastifyReply) => {
   try {
     const { collectionId } = request.query;
+    const workspaceId = request.headers['x-workspace-id'] as string;
     let folders;
     if (collectionId) {
-      folders = await folderRepository.getFoldersByCollectionId(collectionId);
+      folders = await folderRepository.getFoldersByCollectionId(collectionId, workspaceId);
     } else {
-      folders = await folderRepository.getAllFolders();
+      folders = await folderRepository.getAllFolders(workspaceId);
     }
     return folders;
   } catch (error: any) {

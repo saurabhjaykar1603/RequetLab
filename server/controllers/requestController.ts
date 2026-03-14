@@ -5,13 +5,14 @@ import { RequestEntity } from '../interfaces/request/Request.ts';
 export const getRequests = async (request: FastifyRequest<{ Querystring: { collectionId?: string, folderId?: string } }>, reply: FastifyReply) => {
   try {
     const { collectionId, folderId } = request.query;
+    const workspaceId = request.headers['x-workspace-id'] as string;
     let requests: RequestEntity[];
     if (folderId) {
-      requests = await requestRepository.getRequestsByFolderId(folderId);
+      requests = await requestRepository.getRequestsByFolderId(folderId, workspaceId);
     } else if (collectionId) {
-      requests = await requestRepository.getRequestsByCollectionId(collectionId);
+      requests = await requestRepository.getRequestsByCollectionId(collectionId, workspaceId);
     } else {
-      requests = await requestRepository.getAllRequests();
+      requests = await requestRepository.getAllRequests(workspaceId);
     }
     
     // Parse JSON fields

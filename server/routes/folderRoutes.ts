@@ -2,6 +2,8 @@ import { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import * as folderController from '../controllers/folderController.ts';
 
 export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
+  fastify.addHook('preHandler', fastify.authenticate);
+  
   fastify.get('/', {
     schema: {
       querystring: {

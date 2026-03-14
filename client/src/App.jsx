@@ -30,9 +30,14 @@ export default function App() {
   const [isSending, setIsSending] = useState(false);
 
   // Modals
-  const [modalOpen, setModalOpen] = useState(null); // 'collection', 'folder', 'request', 'import'
+  const [modalOpen, setModalOpen] = useState(null); // 'collection', 'folder', 'request', 'import', 'workspace', 'login', 'signup'
   const [modalData, setModalData] = useState({});
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState('dark');
+
+  // Auth & Workspaces
+  const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
+  const [workspaces, setWorkspaces] = useState([]);
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem('activeWorkspaceId') || '');
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -44,30 +49,100 @@ export default function App() {
 
   // Load Data
   const loadData = async () => {
+    if (!user) return;
     try {
-      const [cols, flds, reqs, envs] = await Promise.all([
+      const [cols, flds, reqs, envs, wks] = await Promise.all([
         api.getCollections(),
         api.getFolders(),
         api.getAllRequests(),
-        api.getEnvironments()
+        api.getEnvironments(),
+        api.getWorkspaces()
       ]);
       setCollections(cols);
       setFolders(flds);
       setRequests(reqs);
       setEnvironments(envs);
+      setWorkspaces(wks);
+
+      if (wks.length > 0 && !activeWorkspaceId) {
+        handleWorkspaceChange(wks[0].id);
+      }
     } catch (err) {
       console.error(err);
+      if (err.message.includes('Unauthorized')) handleLogout();
     }
   };
 
   useEffect(() => {
-    loadData();
-  }, []);
+    if (user) loadData();
+  }, [user, activeWorkspaceId]);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.login(modalData.email, modalData.password);
+      if (res.error) throw new Error(res.error);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res.user));
+      setUser(res.user);
+      setModalOpen(null);
+      setModalData({});
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.signup(modalData.name, modalData.email, modalData.password);
+      if (res.error) throw new Error(res.error);
+      localStorage.setItem('token', res.token);
+      localStorage.setItem('user', JSON.stringify(res.user));
+      setUser(res.user);
+      setModalOpen(null);
+      setModalData({});
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('activeWorkspaceId');
+    setUser(null);
+    setWorkspaces([]);
+    setActiveWorkspaceId('');
+    setCollections([]);
+    setFolders([]);
+    setRequests([]);
+    setActiveRequest(null);
+  };
+
+  const handleWorkspaceChange = (id) => {
+    setActiveWorkspaceId(id);
+    localStorage.setItem('activeWorkspaceId', id);
+  };
+
+  const handleCreateWorkspace = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await api.createWorkspace(modalData.workspaceName, modalData.workspaceType || 'personal');
+      if (res.error) throw new Error(res.error);
+      setModalOpen(null);
+      setModalData({});
+      loadData();
+      handleWorkspaceChange(res.id);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
 
   // Derived Tree based on search
   const tree = useMemo(() => {
     const q = searchQuery.toLowerCase();
-    
+    if (!Array.isArray(collections)) return [];
     return collections.map(col => {
       // Find folders for this collection
       const colFolders = folders.filter(f => f.collectionId === col.id).map(f => {
@@ -632,6 +707,78 @@ export default function App() {
     );
   }
 
+  if (!user) {
+    return (
+      <div className="login-screen">
+        <div className="login-card">
+          <img src="/logo.png" alt="Logo" style={{height: '48px', marginBottom: '16px'}} />
+          <h1>Welcome to RequestLab</h1>
+          <p>Collaborative API Client</p>
+          <div style={{display: 'flex', gap: '12px', marginTop: '24px', width: '100%'}}>
+            <button className="btn-primary" style={{flex: 1}} onClick={() => setModalOpen('login')}>Log In</button>
+            <button className="btn-secondary" style={{flex: 1}} onClick={() => setModalOpen('signup')}>Sign Up</button>
+          </div>
+        </div>
+
+        {modalOpen === 'login' && (
+          <div className="modal-overlay" onClick={() => setModalOpen(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Log In</h3>
+                <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
+              </div>
+              <form onSubmit={handleLogin}>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input type="email" required value={modalData.email || ''} onChange={e => setModalData({...modalData, email: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label>Password</label>
+                    <input type="password" required value={modalData.password || ''} onChange={e => setModalData({...modalData, password: e.target.value})} />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="submit" className="btn-primary">Log In</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {modalOpen === 'signup' && (
+          <div className="modal-overlay" onClick={() => setModalOpen(null)}>
+            <div className="modal" onClick={e => e.stopPropagation()}>
+              <div className="modal-header">
+                <h3>Sign Up</h3>
+                <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
+              </div>
+              <form onSubmit={handleSignup}>
+                <div className="modal-body">
+                  <div className="form-group">
+                    <label>Full Name</label>
+                    <input type="text" required value={modalData.name || ''} onChange={e => setModalData({...modalData, name: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label>Email</label>
+                    <input type="email" required value={modalData.email || ''} onChange={e => setModalData({...modalData, email: e.target.value})} />
+                  </div>
+                  <div className="form-group">
+                    <label>Password</label>
+                    <input type="password" required value={modalData.password || ''} onChange={e => setModalData({...modalData, password: e.target.value})} />
+                  </div>
+                </div>
+                <div className="modal-footer">
+                  <button type="submit" className="btn-primary">Sign Up</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
       {/* THIN NAV BAR */}
@@ -651,23 +798,37 @@ export default function App() {
           </div>
         </div>
         <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center'}}>
+           <div className="user-profile" title={user.name}>
+             {user.name.charAt(0).toUpperCase()}
+           </div>
           <div className="nav-item" onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}>
             {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
             <span>Theme</span>
+          </div>
+          <div className="nav-item" onClick={handleLogout} title="Logout">
+            <X size={20} />
+            <span>Logout</span>
           </div>
         </div>
       </div>
 
       {/* SIDEBAR */}
       <div className="sidebar">
-        <div className="sidebar-header">
-          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
-            <img src="/logo.png" alt="RequestLab Logo" style={{height: '24px', width: '24px'}} />
-            <h2 style={{margin: 0}}>RequestLab</h2>
+        <div className="sidebar-header" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '12px'}}>
+          <div style={{display: 'flex', alignItems: 'center', gap: '8px', width: '100%'}}>
+            <div className="workspace-selector" onClick={() => setModalOpen('workspace-switch')}>
+              <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
+                <Box size={16} />
+                <span style={{fontWeight: 600, fontSize: '14px'}}>{workspaces.find(w => w.id === activeWorkspaceId)?.name || 'Select Workspace'}</span>
+              </div>
+              <ChevronDown size={14} />
+            </div>
+            <button className="icon-btn" onClick={() => setModalOpen('workspace')} title="New Workspace"><Plus size={18} /></button>
           </div>
-          <div style={{display: 'flex', gap: '4px'}}>
-            <button className="btn-secondary" onClick={() => setModalOpen('collection')} style={{padding: '4px 8px'}}><Plus size={14} /> New</button>
-            <button className="btn-secondary" onClick={() => setModalOpen('import')} style={{padding: '4px 8px'}}>Import</button>
+          
+          <div style={{display: 'flex', gap: '4px', width: '100%'}}>
+            <button className="btn-secondary" onClick={() => setModalOpen('collection')} style={{flex: 1, padding: '4px 8px'}}><Plus size={14} /> New</button>
+            <button className="btn-secondary" onClick={() => setModalOpen('import')} style={{flex: 1, padding: '4px 8px'}}>Import</button>
           </div>
         </div>
 
@@ -882,6 +1043,69 @@ export default function App() {
                 <button type="submit" className="btn-primary" disabled={!modalData.importFile}>Import</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {modalOpen === 'workspace' && (
+        <div className="modal-overlay" onClick={() => setModalOpen(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Create Workspace</h3>
+              <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
+            </div>
+            <form onSubmit={handleCreateWorkspace}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Workspace Name</label>
+                  <input autoFocus required value={modalData.workspaceName || ''} onChange={e => setModalData({...modalData, workspaceName: e.target.value})} placeholder="e.g. Project Alpha" />
+                </div>
+                <div className="form-group">
+                  <label>Type</label>
+                  <select 
+                    style={{padding: '10px 12px', background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px'}}
+                    value={modalData.workspaceType || 'personal'} 
+                    onChange={e => setModalData({...modalData, workspaceType: e.target.value})}
+                  >
+                    <option value="personal">Personal</option>
+                    <option value="team">Team</option>
+                  </select>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setModalOpen(null)}>Cancel</button>
+                <button type="submit" className="btn-primary">Create</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {modalOpen === 'workspace-switch' && (
+        <div className="modal-overlay" onClick={() => setModalOpen(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Switch Workspace</h3>
+              <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
+            </div>
+            <div className="modal-body" style={{padding: '8px'}}>
+              {workspaces.map(w => (
+                <div 
+                  key={w.id} 
+                  className={`workspace-option ${w.id === activeWorkspaceId ? 'active' : ''}`}
+                  onClick={() => { handleWorkspaceChange(w.id); setModalOpen(null); }}
+                >
+                  <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                    <div className="workspace-icon">
+                      {w.type === 'team' ? <Box size={14} /> : <Box size={14} />}
+                    </div>
+                    <div>
+                      <div style={{fontWeight: 500}}>{w.name}</div>
+                      <div style={{fontSize: '11px', color: 'var(--text-secondary)'}}>{w.type}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

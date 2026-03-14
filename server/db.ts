@@ -45,14 +45,54 @@ const initializeDb = async () => {
   try {
     await client.query('BEGIN');
 
+    // Users Table
+    await client.query(`CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL UNIQUE,
+      password TEXT NOT NULL,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Workspaces Table
+    await client.query(`CREATE TABLE IF NOT EXISTS workspaces (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      "ownerId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      type TEXT DEFAULT 'personal', -- 'personal' or 'team'
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Workspace Members Table (for team workspaces)
+    await client.query(`CREATE TABLE IF NOT EXISTS workspace_members (
+      "workspaceId" TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+      "userId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role TEXT DEFAULT 'member', -- 'admin' or 'member'
+      PRIMARY KEY ("workspaceId", "userId")
+    )`);
+
     // Collections Table
     await client.query(`CREATE TABLE IF NOT EXISTS collections (
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
-      "userId" TEXT,
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    // Migration: Add userId and workspaceId to collections if they don't exist
+    await client.query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collections' AND column_name='userId') THEN
+          ALTER TABLE collections ADD COLUMN "userId" TEXT REFERENCES users(id) ON DELETE SET NULL;
+        END IF;
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='collections' AND column_name='workspaceId') THEN
+          ALTER TABLE collections ADD COLUMN "workspaceId" TEXT REFERENCES workspaces(id) ON DELETE CASCADE;
+        END IF;
+      END $$;
+    `);
 
     // Folders Table
     await client.query(`CREATE TABLE IF NOT EXISTS folders (

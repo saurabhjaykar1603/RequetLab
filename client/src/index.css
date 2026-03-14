@@ -72,7 +72,7 @@ body {
 
 /* Nav Bar (Leftmost narrow bar in Postman) */
 .nav-bar {
-  width: 64px;
+  width: 78px;
   min-width: 64px;
   background-color: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
@@ -626,4 +626,93 @@ body {
   color: var(--text-secondary);
   width: 14px;
   height: 14px;
+}
+/* Login Screen */
+.login-screen {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-secondary);
+}
+
+.login-card {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 40px;
+  width: 380px;
+  text-align: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.login-card h1 {
+  font-size: 24px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.login-card p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* User Profile */
+.user-profile {
+  width: 32px;
+  height: 32px;
+  background-color: var(--accent-color);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+
+/* Workspace Selector */
+.workspace-selector {
+  display: flex;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.1s;
+}
+
+.workspace-selector:hover {
+  background-color: var(--bg-hover);
+  border-color: var(--border-active);
+}
+
+.workspace-option {
+  padding: 10px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.workspace-option:hover {
+  background-color: var(--bg-hover);
+}
+
+.workspace-option.active {
+  background-color: var(--bg-active-light);
+}
+
+.workspace-icon {
+  width: 28px;
+  height: 28px;
+  background-color: var(--bg-tertiary);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
 }

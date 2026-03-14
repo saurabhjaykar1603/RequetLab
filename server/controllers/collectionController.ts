@@ -5,7 +5,8 @@ import { Collection } from '../interfaces/collection/Collection.ts';
 
 export const getCollections = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
-    const collections = await collectionRepository.getAllCollections();
+    const workspaceId = request.headers['x-workspace-id'] as string;
+    const collections = await collectionRepository.getAllCollections(workspaceId);
     return collections; 
   } catch (error: any) {
     reply.status(500).send({ error: error.message });
@@ -14,8 +15,10 @@ export const getCollections = async (request: FastifyRequest, reply: FastifyRepl
 
 export const createCollection = async (request: FastifyRequest<{ Body: { name: string; userId?: string } }>, reply: FastifyReply) => {
   try {
-    const { name, userId } = request.body;
-    const newCollection = await collectionRepository.createCollection(name, userId);
+    const { name } = request.body;
+    const userId = (request as any).user?.id || '';
+    const workspaceId = request.headers['x-workspace-id'] as string;
+    const newCollection = await collectionRepository.createCollection(name, userId, workspaceId);
     reply.status(201).send(newCollection);
   } catch (error: any) {
     reply.status(500).send({ error: error.message });

@@ -2,15 +2,33 @@ import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { RequestEntity } from '../interfaces/request/Request.ts';
 
-export const getAllRequests = async (): Promise<RequestEntity[]> => {
+export const getAllRequests = async (workspaceId?: string): Promise<RequestEntity[]> => {
+  if (workspaceId) {
+    return await getQuery<RequestEntity>(
+      'SELECT r.* FROM requests r JOIN collections c ON r."collectionId" = c.id WHERE c."workspaceId" = $1 ORDER BY r."createdAt" ASC',
+      [workspaceId]
+    );
+  }
   return await getQuery<RequestEntity>('SELECT * FROM requests ORDER BY "createdAt" ASC');
 };
 
-export const getRequestsByFolderId = async (folderId: string): Promise<RequestEntity[]> => {
+export const getRequestsByFolderId = async (folderId: string, workspaceId?: string): Promise<RequestEntity[]> => {
+  if (workspaceId) {
+    return await getQuery<RequestEntity>(
+      'SELECT r.* FROM requests r JOIN collections c ON r."collectionId" = c.id WHERE r."folderId" = $1 AND c."workspaceId" = $2 ORDER BY r."createdAt" ASC',
+      [folderId, workspaceId]
+    );
+  }
   return await getQuery<RequestEntity>('SELECT * FROM requests WHERE "folderId" = $1 ORDER BY "createdAt" ASC', [folderId]);
 };
 
-export const getRequestsByCollectionId = async (collectionId: string): Promise<RequestEntity[]> => {
+export const getRequestsByCollectionId = async (collectionId: string, workspaceId?: string): Promise<RequestEntity[]> => {
+  if (workspaceId) {
+    return await getQuery<RequestEntity>(
+      'SELECT r.* FROM requests r JOIN collections c ON r."collectionId" = c.id WHERE r."collectionId" = $1 AND (r."folderId" IS NULL OR r."folderId" = \'\') AND c."workspaceId" = $2 ORDER BY r."createdAt" ASC',
+      [collectionId, workspaceId]
+    );
+  }
   return await getQuery<RequestEntity>('SELECT * FROM requests WHERE "collectionId" = $1 AND ("folderId" IS NULL OR "folderId" = \'\') ORDER BY "createdAt" ASC', [collectionId]);
 };
 

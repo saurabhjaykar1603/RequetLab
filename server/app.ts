@@ -6,8 +6,11 @@ import logger from './logger.ts';
 // Plugins
 import envWatcher from './plugins/env-watcher.ts';
 import requestLogger from './plugins/request-logger.ts';
+import auth from './plugins/auth.ts';
 
 // Routes
+import authRoutes from './routes/authRoutes.ts';
+import workspaceRoutes from './routes/workspaceRoutes.ts';
 import collectionRoutes from './routes/collectionRoutes.ts';
 import folderRoutes from './routes/folderRoutes.ts';
 import requestRoutes from './routes/requestRoutes.ts';
@@ -18,7 +21,7 @@ dotenv.config();
 
 // Initialize Fastify
 const fastify: FastifyInstance = Fastify({
-  logger: false 
+  logger: true 
 });
 
 // Register Core Plugins
@@ -30,8 +33,11 @@ fastify.register(cors, {
 // Register Custom Plugins
 fastify.register(envWatcher);
 fastify.register(requestLogger);
+fastify.register(auth);
 
 // Register Routes
+fastify.register(authRoutes, { prefix: '/api/auth' });
+fastify.register(workspaceRoutes, { prefix: '/api/workspaces' });
 fastify.register(collectionRoutes, { prefix: '/api/collections' });
 fastify.register(folderRoutes, { prefix: '/api/folders' });
 fastify.register(requestRoutes, { prefix: '/api/requests' });

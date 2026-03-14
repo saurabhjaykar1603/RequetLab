@@ -2,13 +2,16 @@ import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { Collection } from '../interfaces/collection/Collection.ts';
 
-export const getAllCollections = async (): Promise<Collection[]> => {
+export const getAllCollections = async (workspaceId?: string): Promise<Collection[]> => {
+  if (workspaceId) {
+    return await getQuery<Collection>('SELECT * FROM collections WHERE "workspaceId" = $1 ORDER BY "createdAt" DESC', [workspaceId]);
+  }
   return await getQuery<Collection>('SELECT * FROM collections ORDER BY "createdAt" DESC');
 };
 
-export const createCollection = async (name: string, userId: string = ''): Promise<Collection | undefined> => {
+export const createCollection = async (name: string, userId: string = '', workspaceId?: string): Promise<Collection | undefined> => {
   const id = uuidv4();
-  await runQuery('INSERT INTO collections (id, name, "userId") VALUES ($1, $2, $3)', [id, name, userId]);
+  await runQuery('INSERT INTO collections (id, name, "userId", "workspaceId") VALUES ($1, $2, $3, $4)', [id, name, userId, workspaceId]);
   return await getSingleQuery<Collection>('SELECT * FROM collections WHERE id = $1', [id]);
 };
 

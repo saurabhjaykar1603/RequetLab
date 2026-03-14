@@ -2,11 +2,23 @@ import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { Folder } from '../interfaces/folder/Folder.ts';
 
-export const getAllFolders = async (): Promise<Folder[]> => {
+export const getAllFolders = async (workspaceId?: string): Promise<Folder[]> => {
+  if (workspaceId) {
+    return await getQuery<Folder>(
+      'SELECT f.* FROM folders f JOIN collections c ON f."collectionId" = c.id WHERE c."workspaceId" = $1 ORDER BY f."createdAt" ASC',
+      [workspaceId]
+    );
+  }
   return await getQuery<Folder>('SELECT * FROM folders ORDER BY "createdAt" ASC');
 };
 
-export const getFoldersByCollectionId = async (collectionId: string): Promise<Folder[]> => {
+export const getFoldersByCollectionId = async (collectionId: string, workspaceId?: string): Promise<Folder[]> => {
+  if (workspaceId) {
+    return await getQuery<Folder>(
+      'SELECT f.* FROM folders f JOIN collections c ON f."collectionId" = c.id WHERE f."collectionId" = $1 AND c."workspaceId" = $2 ORDER BY f."createdAt" ASC',
+      [collectionId, workspaceId]
+    );
+  }
   return await getQuery<Folder>('SELECT * FROM folders WHERE "collectionId" = $1 ORDER BY "createdAt" ASC', [collectionId]);
 };
 
