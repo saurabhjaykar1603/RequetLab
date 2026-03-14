@@ -31,7 +31,6 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <img src="/logo.png" alt="Logo" style={{ height: '48px', marginBottom: '16px' }} />
         <h1>Welcome Back</h1>
         <p>Log in to your RequestLab account</p>
         

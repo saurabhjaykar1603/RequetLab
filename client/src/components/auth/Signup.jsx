@@ -31,7 +31,6 @@ export default function Signup({ onSignupSuccess }) {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <img src="/logo.png" alt="Logo" style={{ height: '48px', marginBottom: '16px' }} />
         <h1>Create Account</h1>
         <p>Join RequestLab today</p>
         
