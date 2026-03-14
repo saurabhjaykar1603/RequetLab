@@ -34,10 +34,19 @@ const RequestEditor = ({
 
   const backdropRef = React.useRef(null);
   const inputRef = React.useRef(null);
+  const bodyBackdropRef = React.useRef(null);
+  const bodyInputRef = React.useRef(null);
 
   const syncScroll = () => {
     if (backdropRef.current && inputRef.current) {
       backdropRef.current.scrollLeft = inputRef.current.scrollLeft;
+    }
+  };
+
+  const syncBodyScroll = () => {
+    if (bodyBackdropRef.current && bodyInputRef.current) {
+      bodyBackdropRef.current.scrollTop = bodyInputRef.current.scrollTop;
+      bodyBackdropRef.current.scrollLeft = bodyInputRef.current.scrollLeft;
     }
   };
 
@@ -55,6 +64,62 @@ const RequestEditor = ({
       }
       return <span key={i}>{part}</span>;
     });
+  };
+
+  const renderHighlightedJson = (json) => {
+    if (!json) return null;
+    
+    // Regex for: vars, keys, strings, booleans/nulls, numbers
+    const regex = /({{.*?}})|(".*?"\s*(?=:))|(".*?")|(true|false|null)|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g;
+    
+    let result = [];
+    let lastIndex = 0;
+    let match;
+    
+    // Use exec for precise group matching
+    while ((match = regex.exec(json)) !== null) {
+      // Add unhighlighted text before the match
+      if (match.index > lastIndex) {
+        result.push(<span key={`text-${lastIndex}`}>{json.slice(lastIndex, match.index)}</span>);
+      }
+      
+      const [fullMatch, envVar, key, string, boolNull, number] = match;
+      
+      if (envVar) {
+        result.push(renderHighlightedText(envVar));
+      } else if (key) {
+        result.push(<span key={`key-${match.index}`} className="json-hl-key">{key}</span>);
+      } else if (string) {
+        // String value - might contain env vars
+        result.push(<span key={`str-${match.index}`} className="json-hl-string">{renderHighlightedText(string)}</span>);
+      } else if (boolNull) {
+        const className = boolNull === 'null' ? 'json-hl-null' : 'json-hl-boolean';
+        result.push(<span key={`bn-${match.index}`} className={className}>{boolNull}</span>);
+      } else if (number) {
+        result.push(<span key={`num-${match.index}`} className="json-hl-number">{number}</span>);
+      }
+      
+      lastIndex = regex.lastIndex;
+    }
+    
+    // Add remaining text
+    if (lastIndex < json.length) {
+      result.push(<span key={`text-${lastIndex}`}>{json.slice(lastIndex)}</span>);
+    }
+    
+    return result;
+  };
+
+  const beautifyJson = () => {
+    try {
+      const content = activeRequest.body?.content || '';
+      if (!content) return;
+      const parsed = JSON.parse(content);
+      const formatted = JSON.stringify(parsed, null, 2);
+      handleChange('body', { ...activeRequest.body, content: formatted });
+    } catch (err) {
+      // If invalid JSON, don't do anything or show a hint
+    }
   };
 
   return (
@@ -117,7 +182,7 @@ const RequestEditor = ({
             </div>
           </div>
           <button className="btn-primary" onClick={handleSendRequest} disabled={isSending}>
-             {isSending ? 'Sending...' : 'Send'} <ChevronDown size={14} style={{marginLeft: '4px'}}/>
+             {isSending ? 'Sending...' : 'Send'}
           </button>
         </div>
       </div>
@@ -155,12 +220,25 @@ const RequestEditor = ({
               />
             </div>
             {activeRequest.body?.type === 'json' && (
-              <textarea 
-                className="code-editor"
-                value={activeRequest.body?.content || ''}
-                onChange={(e) => handleChange('body', { ...activeRequest.body, content: e.target.value })}
-                placeholder="{}"
-              />
+              <div style={{display:'flex', flexDirection:'column', gap:'8px'}}>
+                <div style={{display:'flex', justifyContent:'flex-end'}}>
+                  <button className="beautify-btn" onClick={beautifyJson}>Beautify</button>
+                </div>
+                <div className="code-editor-container">
+                  <div className="code-editor-backdrop" ref={bodyBackdropRef}>
+                    {renderHighlightedJson(activeRequest.body?.content)}
+                  </div>
+                  <textarea 
+                    ref={bodyInputRef}
+                    className="code-editor"
+                    value={activeRequest.body?.content || ''}
+                    onChange={(e) => handleChange('body', { ...activeRequest.body, content: e.target.value })}
+                    onScroll={syncBodyScroll}
+                    placeholder="{}"
+                    spellCheck="false"
+                  />
+                </div>
+              </div>
             )}
             {activeRequest.body?.type === 'form-data' && (
               <KvTable 
@@ -197,7 +275,9 @@ const RequestEditor = ({
             <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '40px' }}>Sending request...</div>
           ) : response ? (
             <pre>
-              {typeof response.data === 'object' ? JSON.stringify(response.data, null, 2) : response.data}
+              {typeof response.data === 'object' 
+                ? renderHighlightedJson(JSON.stringify(response.data, null, 2)) 
+                : response.data}
             </pre>
           ) : (
             <div style={{ color: 'var(--text-secondary)', textAlign: 'center', marginTop: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px' }}>

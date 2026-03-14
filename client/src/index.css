@@ -512,8 +512,10 @@ body {
 .response-body pre {
   margin: 0;
   color: var(--text-primary);
-  font-family: 'JetBrains Mono', Consolas, 'Courier New', monospace;
-  font-size: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-break: break-all;
 }
@@ -908,4 +910,82 @@ body {
 
 .var-span.unresolved {
   color: #eb2013;
+}
+
+/* JSON Syntax Highlighting */
+.json-hl-key { color: #f2994a; font-weight: 400; } /* Even lower weight for keys */
+.json-hl-string { color: #0cbb52; } /* Green for strings */
+.json-hl-number { color: #2f80ed; } /* Blue for numbers */
+.json-hl-boolean { color: #9b51e0; } /* Purple for booleans */
+.json-hl-null { color: #828282; }
+
+/* Multiline Backdrop for Body Editor */
+.code-editor-container {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.code-editor-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 12px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: var(--text-primary);
+  pointer-events: none;
+  overflow-y: auto;
+  z-index: 1;
+}
+
+.code-editor {
+  position: relative;
+  width: 100%;
+  min-height: 200px;
+  padding: 12px;
+  background: transparent !important;
+  color: transparent !important;
+  caret-color: var(--text-primary);
+  border: none !important;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 11px;
+  font-weight: 300;
+  line-height: 1.6;
+  resize: vertical;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  z-index: 2;
+  outline: none;
+}
+
+.code-editor:focus {
+  outline: none;
+}
+
+/* Beautify Button */
+.beautify-btn {
+  font-size: 11px;
+  padding: 2px 8px;
+  color: var(--accent-color);
+  background: transparent;
+  border: 1px solid var(--accent-color);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.beautify-btn:hover {
+  background: var(--accent-color);
+  color: #fff;
 }
