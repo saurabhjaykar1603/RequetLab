@@ -69,7 +69,7 @@ export const createInvitation = async (workspaceId: string, inviterId: string, i
   const sql = `
     INSERT INTO workspace_invitations (id, "workspaceId", "inviterId", "inviteeId", role)
     VALUES ($1, $2, $3, $4, $5)
-    ON CONFLICT ("workspaceId", "inviteeId", status) WHERE status = 'pending' DO UPDATE SET role = EXCLUDED.role
+    ON CONFLICT ("workspaceId", "inviteeId", status) DO UPDATE SET role = EXCLUDED.role
     RETURNING *
   `;
   const res = await runQuery(sql, [id, workspaceId, inviterId, inviteeId, role]);
