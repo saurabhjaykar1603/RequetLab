@@ -127,6 +127,16 @@ const RequestEditor = ({
                 placeholder="{}"
               />
             )}
+            {activeRequest.body?.type === 'form-data' && (
+              <KvTable 
+                field="body" 
+                activeRequest={{ ...activeRequest, body: activeRequest.body.content }} 
+                setActiveRequest={(updater) => {
+                  const updatedReq = typeof updater === 'function' ? updater({ ...activeRequest, body: activeRequest.body.content }) : updater;
+                  handleChange('body', { ...activeRequest.body, content: updatedReq.body });
+                }} 
+              />
+            )}
           </div>
         )}
         {editorTab === 'auth' && (

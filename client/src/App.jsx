@@ -421,18 +421,108 @@ export default function App() {
     reader.onload = async (event) => {
       try {
         const data = JSON.parse(event.target.result);
+        
+        const parsePostmanBody = (body) => {
+          if (!body) return { type: 'none', content: '' };
+          if (body.mode === 'raw') return { type: 'json', content: body.raw || '' };
+          if (body.mode === 'formdata') {
+            return { type: 'form-data', content: (body.formdata || []).map(f => ({ key: f.key, value: f.value, enabled: !f.disabled })) };
+          }
+          return { type: 'none', content: '' };
+        };
+
+        const parsePostmanHeaders = (headers) => {
+          if (!headers || !Array.isArray(headers)) return [];
+          return headers.map(h => ({
+            key: h.key,
+            value: h.value,
+            enabled: !h.disabled,
+            description: h.description || ''
+          }));
+        };
+
+        const parsePostmanUrl = (url) => {
+          if (typeof url === 'string') return url;
+          if (url && url.raw) return url.raw;
+          return '';
+        };
+
+        const parsePostmanParams = (url) => {
+          if (!url || !url.query || !Array.isArray(url.query)) return [];
+          return url.query.map(q => ({
+            key: q.key,
+            value: q.value,
+            enabled: !q.disabled,
+            description: q.description || ''
+          }));
+        };
+
         let importTree = {
           name: data.collection_name || data.info?.name || 'Imported Collection',
-          userId: user.id || 'user_1',
+          userId: user.id,
           folders: [],
           requests: []
         };
+
+        const processItems = (items, currentFolderName = null) => {
+          items.forEach(item => {
+            if (item.item) {
+              // It's a folder
+              const folderName = currentFolderName ? `${currentFolderName} / ${item.name}` : item.name;
+              const folderRequests = [];
+              const subItems = [];
+              
+              // We'll flatten internal folders for now
+              const extractRequests = (subItemsList) => {
+                subItemsList.forEach(si => {
+                  if (si.request) {
+                    folderRequests.push({
+                      name: si.name,
+                      method: si.request.method,
+                      url: parsePostmanUrl(si.request.url),
+                      headers: parsePostmanHeaders(si.request.header),
+                      body: parsePostmanBody(si.request.body),
+                      params: parsePostmanParams(si.request.url)
+                    });
+                  } else if (si.item) {
+                    extractRequests(si.item);
+                  }
+                });
+              };
+              
+              extractRequests(item.item);
+              
+              if (folderRequests.length > 0) {
+                importTree.folders.push({
+                  name: folderName,
+                  requests: folderRequests
+                });
+              }
+            } else if (item.request) {
+              // It's a root request
+              importTree.requests.push({
+                name: item.name,
+                method: item.request.method,
+                url: parsePostmanUrl(item.request.url),
+                headers: parsePostmanHeaders(item.request.header),
+                body: parsePostmanBody(item.request.body),
+                params: parsePostmanParams(item.request.url)
+              });
+            }
+          });
+        };
+
+        if (data.item) {
+          processItems(data.item);
+        }
+
         await api.importCollection(importTree);
         setModalOpen(null);
         setModalData({});
         loadData();
         showToast({ message: 'Collection imported!', type: 'success' });
       } catch (err) {
+        console.error("Import error:", err);
         showToast({ message: "Invalid format: " + err.message, type: 'error' });
       }
     };
