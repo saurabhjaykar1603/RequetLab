@@ -126,9 +126,20 @@ const initializeDb = async () => {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       variables TEXT,
+      "workspaceId" TEXT REFERENCES workspaces(id) ON DELETE CASCADE,
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    // Migration: Add workspaceId to environments if it doesn't exist
+    await client.query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='environments' AND column_name='workspaceId') THEN
+          ALTER TABLE environments ADD COLUMN "workspaceId" TEXT REFERENCES workspaces(id) ON DELETE CASCADE;
+        END IF;
+      END $$;
+    `);
 
     // Workspace Invitations Table
     await client.query(`CREATE TABLE IF NOT EXISTS workspace_invitations (

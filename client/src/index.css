@@ -862,3 +862,50 @@ body {
   min-height: 32px;
   padding: 0 8px;
 }
+/* Variable Highlighting */
+.highlighted-input-container {
+  position: relative;
+  display: flex;
+  flex: 1;
+  height: 100%;
+  min-height: 32px;
+  align-items: center;
+}
+
+.highlighted-input-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  font-family: inherit;
+  font-size: 13px;
+  pointer-events: none;
+  white-space: pre;
+  overflow: hidden;
+  color: var(--text-primary);
+  opacity: 1;
+  line-height: 32px;
+}
+
+.url-input.highlight-mode {
+  color: transparent !important;
+  caret-color: var(--text-primary);
+  background: transparent !important;
+  z-index: 1;
+}
+
+.var-span {
+  font-weight: 600;
+}
+
+.var-span.resolved {
+  color: #097bed;
+}
+
+.var-span.unresolved {
+  color: #eb2013;
+}

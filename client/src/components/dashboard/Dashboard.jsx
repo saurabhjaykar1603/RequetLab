@@ -15,6 +15,7 @@ const Dashboard = ({
   workspaces,
   activeWorkspaceId,
   setModalOpen,
+  setModalData,
   searchQuery,
   setSearchQuery,
   tree,
@@ -23,7 +24,10 @@ const Dashboard = ({
   handleDeleteCollection,
   handleDeleteFolder,
   handleDeleteRequest,
+  handleDeleteEnvironment,
   handleDuplicateRequest,
+  globals,
+  handleUpdateGlobals,
   activeRequest,
   setActiveRequest,
   expanded,
@@ -92,15 +96,15 @@ const Dashboard = ({
         </div>
         
         <div style={{display: 'flex', gap: '4px', width: '100%'}}>
-          <button className="btn-secondary" onClick={() => setModalOpen('collection')} style={{flex: 1, padding: '4px 8px'}}><Plus size={14} /> New</button>
-          <button className="btn-secondary" onClick={() => setModalOpen('import')} style={{flex: 1, padding: '4px 8px'}}>Import</button>
+          <button className="btn-secondary" onClick={() => setModalOpen(activeTab === 'collections' ? 'collection' : 'environment')} style={{flex: 1, padding: '4px 8px'}}><Plus size={14} /> New</button>
+          {activeTab === 'collections' && <button className="btn-secondary" onClick={() => setModalOpen('import')} style={{flex: 1, padding: '4px 8px'}}>Import</button>}
         </div>
       </div>
 
       <div className="search-bar">
         <Search size={14} />
         <input 
-          placeholder="Search collections" 
+          placeholder={activeTab === 'collections' ? "Search collections" : "Search environments"} 
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -186,6 +190,35 @@ const Dashboard = ({
             )}
           </div>
         ))}
+
+        {activeTab === 'environments' && (
+          <div 
+            className={`collection-header ${activeEnvId === 'globals' ? 'active' : ''}`}
+            onClick={() => { setModalData({ id: 'globals', name: 'Globals', variables: globals }); setModalOpen('environment'); }}
+            style={{ borderBottom: '1px solid var(--border-color)', marginBottom: '8px' }}
+          >
+            <Server size={16} style={{marginRight: '8px', color: 'var(--accent-color)'}}/>
+            <span style={{flex: 1, fontWeight: 600}}>Global Variables</span>
+            <div className="item-actions">
+              <Plus size={14} />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'environments' && environments.map(env => (
+          <div 
+            key={env.id} 
+            className={`collection-header ${activeEnvId === env.id ? 'active' : ''}`}
+            onClick={() => setActiveEnvId(env.id)}
+          >
+            <Server size={16} style={{marginRight: '8px', color: 'var(--text-secondary)'}}/>
+            <span style={{flex: 1}}>{env.name}</span>
+            <div className="item-actions">
+              <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalData({ id: env.id, name: env.name, variables: env.variables }); setModalOpen('environment'); }} title="Edit"><Copy size={14} /></button>
+              <button className="icon-btn" onClick={(e) => { e.stopPropagation(); handleDeleteEnvironment(env.id); }} title="Delete"><Trash2 size={14} /></button>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
 
@@ -197,6 +230,7 @@ const Dashboard = ({
         environments={environments}
         activeEnvId={activeEnvId}
         setActiveEnvId={setActiveEnvId}
+        globals={globals}
         handleSaveRequest={handleSaveRequest}
         handleCopyAsCurl={handleCopyAsCurl}
         handleUrlPaste={handleUrlPaste}

@@ -195,6 +195,21 @@ export const api = {
     });
     return res.json();
   },
+  updateEnvironment: async (id, name, variables = {}) => {
+    const res = await fetch(`${BASE_URL}/environments/${id}`, {
+      method: 'PUT',
+      headers: getPostHeaders(),
+      body: JSON.stringify({ name, variables })
+    });
+    return res.json();
+  },
+  deleteEnvironment: async (id) => {
+    const res = await fetch(`${BASE_URL}/environments/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    return res.json();
+  },
 
   // Execution
   executeRequest: async (config) => {

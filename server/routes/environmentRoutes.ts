@@ -18,4 +18,23 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
       }
     }
   }, environmentController.createEnvironment);
+
+  fastify.put('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } }
+      },
+      body: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string' },
+          variables: { type: 'object' }
+        }
+      }
+    }
+  }, environmentController.updateEnvironment);
+
+  fastify.delete('/:id', environmentController.deleteEnvironment);
 }

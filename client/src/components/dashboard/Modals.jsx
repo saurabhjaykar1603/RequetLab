@@ -25,9 +25,47 @@ const Modals = ({
   currentUser,
   pendingInvitations,
   handleRespondToInvitation,
-  fetchInvitations
+  fetchInvitations,
+  handleCreateEnvironment,
+  handleUpdateEnvironment,
+  globals,
+  handleUpdateGlobals
 }) => {
   if (!modalOpen) return null;
+
+  const handleEnvVarChange = (idx, field, value) => {
+    const vars = { ...(modalData.variables || {}) };
+    const keys = Object.keys(vars);
+    const entries = Object.entries(vars);
+    
+    if (field === 'key') {
+      const oldKey = entries[idx][0];
+      const val = entries[idx][1];
+      delete vars[oldKey];
+      vars[value] = val;
+    } else {
+      const key = entries[idx][0];
+      vars[key] = value;
+    }
+    setModalData({ ...modalData, variables: vars });
+  };
+
+  const addEnvVar = () => {
+    const vars = { ...(modalData.variables || {}) };
+    let newKey = 'variable';
+    let counter = 1;
+    while (vars[newKey] !== undefined) {
+      newKey = `variable_${counter++}`;
+    }
+    vars[newKey] = '';
+    setModalData({ ...modalData, variables: vars });
+  };
+
+  const removeEnvVar = (key) => {
+    const vars = { ...(modalData.variables || {}) };
+    delete vars[key];
+    setModalData({ ...modalData, variables: vars });
+  };
 
   return (
     <>
@@ -497,6 +535,66 @@ const Modals = ({
                 Delete Permanently
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {modalOpen === 'environment' && (
+        <div className="modal-overlay" onClick={() => setModalOpen(null)}>
+          <div className="modal" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>{modalData.id ? 'Edit Environment' : 'New Environment'}</h3>
+              <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
+            </div>
+            <form onSubmit={(e) => { 
+              e.preventDefault(); 
+              if (modalData.id === 'globals') {
+                handleUpdateGlobals(modalData.variables);
+                setModalOpen(null);
+              } else {
+                modalData.id ? handleUpdateEnvironment(e) : handleCreateEnvironment(e);
+              }
+            }}>
+              <div className="modal-body">
+                <div className="form-group">
+                  <label>Name</label>
+                  <input autoFocus required value={modalData.name || ''} onChange={e => setModalData({...modalData, name: e.target.value})} placeholder="e.g. Production" />
+                </div>
+                <div className="form-group" style={{ marginTop: '20px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <label>Variables</label>
+                    <button type="button" className="btn-secondary" style={{ padding: '4px 8px', fontSize: '12px' }} onClick={addEnvVar}>+ Add Variable</button>
+                  </div>
+                  <div className="env-vars-editor" style={{ maxHeight: '300px', overflowY: 'auto' }}>
+                    {Object.entries(modalData.variables || {}).map(([key, val], idx) => (
+                      <div key={idx} style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                        <input 
+                          style={{ flex: 1 }} 
+                          value={key} 
+                          onChange={(e) => handleEnvVarChange(idx, 'key', e.target.value)} 
+                          placeholder="Variable Name" 
+                        />
+                        <input 
+                          style={{ flex: 1 }} 
+                          value={val} 
+                          onChange={(e) => handleEnvVarChange(idx, 'value', e.target.value)} 
+                          placeholder="Value" 
+                        />
+                        <button type="button" className="icon-btn" onClick={() => removeEnvVar(key)} style={{ color: '#ef4444' }}><Trash2 size={16}/></button>
+                      </div>
+                    ))}
+                    {Object.keys(modalData.variables || {}).length === 0 && (
+                      <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)', fontSize: '13px', border: '1px dashed var(--border-color)', borderRadius: '4px' }}>
+                        No variables defined yet.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="modal-footer">
+                <button type="button" className="btn-secondary" onClick={() => setModalOpen(null)}>Cancel</button>
+                <button type="submit" className="btn-primary">{modalData.id ? 'Save Changes' : 'Create'}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}

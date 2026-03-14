@@ -1,3 +1,4 @@
+import React from 'react';
 import { Play, Copy, Save, ChevronDown } from 'lucide-react';
 import KvTable from './KvTable';
 import CustomSelect from '../common/CustomSelect';
@@ -8,6 +9,7 @@ const RequestEditor = ({
   environments, 
   activeEnvId, 
   setActiveEnvId, 
+  globals,
   handleSaveRequest, 
   handleCopyAsCurl, 
   handleUrlPaste, 
@@ -28,6 +30,31 @@ const RequestEditor = ({
 
   const handleChange = (field, value) => {
     setActiveRequest(prev => ({ ...prev, [field]: value }));
+  };
+
+  const backdropRef = React.useRef(null);
+  const inputRef = React.useRef(null);
+
+  const syncScroll = () => {
+    if (backdropRef.current && inputRef.current) {
+      backdropRef.current.scrollLeft = inputRef.current.scrollLeft;
+    }
+  };
+
+  const renderHighlightedText = (text) => {
+    if (!text) return null;
+    const activeEnv = environments.find(e => e.id === activeEnvId);
+    const combinedVars = { ...globals, ...(activeEnv?.variables || {}) };
+    const parts = text.split(/({{.*?}})/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('{{') && part.endsWith('}}')) {
+        const key = part.slice(2, -2).trim();
+        const value = combinedVars[key];
+        const status = (value !== undefined && value !== null && value !== '') ? 'resolved' : 'unresolved';
+        return <span key={i} className={`var-span ${status}`}>{part}</span>;
+      }
+      return <span key={i}>{part}</span>;
+    });
   };
 
   return (
@@ -73,13 +100,21 @@ const RequestEditor = ({
                 <span className={`method-${opt?.value}`} style={{fontWeight: 'bold'}}>{opt?.label || 'GET'}</span>
               )}
             />
-            <input 
-              className="url-input" 
-              value={activeRequest.url}
-              onChange={(e) => handleChange('url', e.target.value)} 
-              onPaste={handleUrlPaste}
-              placeholder="Enter URL or paste cURL"
-            />
+            <div className="highlighted-input-container">
+              <div className="highlighted-input-backdrop" ref={backdropRef}>
+                {renderHighlightedText(activeRequest.url)}
+              </div>
+              <input 
+                ref={inputRef}
+                className="url-input highlight-mode" 
+                value={activeRequest.url}
+                onChange={(e) => handleChange('url', e.target.value)} 
+                onScroll={syncScroll}
+                onPaste={handleUrlPaste}
+                placeholder="Enter URL or paste cURL"
+                spellCheck="false"
+              />
+            </div>
           </div>
           <button className="btn-primary" onClick={handleSendRequest} disabled={isSending}>
              {isSending ? 'Sending...' : 'Send'} <ChevronDown size={14} style={{marginLeft: '4px'}}/>

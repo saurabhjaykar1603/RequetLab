@@ -40,6 +40,11 @@ export default function App() {
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem('activeWorkspaceId') || '');
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
   const [pendingInvitations, setPendingInvitations] = useState([]);
+  const [globals, setGlobals] = useState(() => JSON.parse(localStorage.getItem('globals') || '{}'));
+
+  useEffect(() => {
+    localStorage.setItem('globals', JSON.stringify(globals));
+  }, [globals]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -251,6 +256,54 @@ export default function App() {
     loadData();
   };
 
+  const handleCreateEnvironment = async (e) => {
+    e.preventDefault();
+    if (!modalData.name) return;
+    try {
+      const res = await api.createEnvironment(modalData.name, modalData.variables || {});
+      if (res.error) throw new Error(res.error);
+      setModalOpen(null);
+      setModalData({});
+      await loadData();
+      showToast({ message: 'Environment created!', type: 'success' });
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
+  const handleUpdateEnvironment = async (e) => {
+    e.preventDefault();
+    if (!modalData.name || !modalData.id) return;
+    try {
+      const res = await api.updateEnvironment(modalData.id, modalData.name, modalData.variables || {});
+      if (res.error) throw new Error(res.error);
+      setModalOpen(null);
+      setModalData({});
+      await loadData();
+      showToast({ message: 'Environment updated!', type: 'success' });
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
+  const handleUpdateGlobals = (newGlobals) => {
+    setGlobals(newGlobals);
+    showToast({ message: 'Global variables updated', type: 'success' });
+  };
+
+  const handleDeleteEnvironment = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this environment?')) return;
+    try {
+      const res = await api.deleteEnvironment(id);
+      if (res.error) throw new Error(res.error);
+      if (activeEnvId === id) setActiveEnvId('');
+      await loadData();
+      showToast({ message: 'Environment deleted', type: 'info' });
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
   const handleCreateFolder = async (e) => {
     e.preventDefault();
     if (!modalData.name || !modalData.collectionId) return;
@@ -422,6 +475,21 @@ export default function App() {
       try {
         const data = JSON.parse(event.target.result);
         
+        // Handle Postman Environment
+        if (data._postman_variable_scope === 'environment' || (data.values && Array.isArray(data.values) && data.name && !data.item)) {
+          console.log("Importing Postman environment:", data.name);
+          const vars = {};
+          (data.values || []).forEach(v => {
+            if (v.key) vars[v.key] = v.value || '';
+          });
+          await api.createEnvironment(data.name || 'Imported Postman Env', vars);
+          showToast({ message: `Environment '${data.name}' imported`, type: 'success' });
+          loadData();
+          setModalOpen(null);
+          setModalData({});
+          return;
+        }
+        
         const parsePostmanBody = (body) => {
           if (!body) return { type: 'none', content: '' };
           if (body.mode === 'raw') return { type: 'json', content: body.raw || '' };
@@ -538,20 +606,40 @@ export default function App() {
       const replaceVars = (str) => {
         if (!str || typeof str !== 'string') return str;
         let res = str;
-        if (activeEnv && activeEnv.variables) {
-          Object.entries(activeEnv.variables).forEach(([k, v]) => {
-            res = res.replace(new RegExp(`{{${k}}}`, 'g'), v);
-          });
-        }
+        
+        // Match {{variable_name}}
+        const regex = /{{(.*?)}}/g;
+        res = res.replace(regex, (match, key) => {
+          const trimmedKey = key.trim();
+          // Priority: Active Env > Globals
+          if (activeEnv && activeEnv.variables && activeEnv.variables[trimmedKey] !== undefined) {
+            return activeEnv.variables[trimmedKey];
+          }
+          if (globals[trimmedKey] !== undefined) {
+            return globals[trimmedKey];
+          }
+          return match; // Return as is if not found
+        });
+        
         return res;
       };
+
       const subUrl = replaceVars(activeRequest.url);
       const subHeaders = (activeRequest.headers || []).map(h => ({ ...h, value: replaceVars(h.value) }));
       const subParams = (activeRequest.params || []).map(p => ({ ...p, value: replaceVars(p.value) }));
-      let subBody = activeRequest.body;
-      if (subBody && subBody.type === 'json' && subBody.content) {
-        subBody = { ...subBody, content: replaceVars(subBody.content) };
+      let subBody = typeof activeRequest.body === 'string' ? replaceVars(activeRequest.body) : activeRequest.body;
+      
+      if (typeof activeRequest.body === 'object' && activeRequest.body !== null) {
+        if (activeRequest.body.type === 'json' && activeRequest.body.content) {
+          subBody = { ...activeRequest.body, content: replaceVars(activeRequest.body.content) };
+        } else if (activeRequest.body.type === 'form-data' && Array.isArray(activeRequest.body.content)) {
+          subBody = { 
+            ...activeRequest.body, 
+            content: activeRequest.body.content.map(f => ({ ...f, value: replaceVars(f.value) })) 
+          };
+        }
       }
+
       const res = await api.executeRequest({
         url: subUrl,
         method: activeRequest.method,
@@ -577,12 +665,10 @@ export default function App() {
             user={user}
             activeTab={activeTab}
             setActiveTab={setActiveTab}
-            environments={environments}
-            activeEnvId={activeEnvId}
-            setActiveEnvId={setActiveEnvId}
             workspaces={workspaces}
             activeWorkspaceId={activeWorkspaceId}
             setModalOpen={setModalOpen}
+            setModalData={setModalData}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
             tree={tree}
@@ -591,9 +677,15 @@ export default function App() {
             handleDeleteCollection={handleDeleteCollection}
             handleDeleteFolder={handleDeleteFolder}
             handleDeleteRequest={handleDeleteRequest}
+            handleDeleteEnvironment={handleDeleteEnvironment}
             handleDuplicateRequest={handleDuplicateRequest}
             activeRequest={activeRequest}
             setActiveRequest={setActiveRequest}
+            globals={globals}
+            handleUpdateGlobals={handleUpdateGlobals}
+            activeEnvId={activeEnvId}
+            setActiveEnvId={setActiveEnvId}
+            environments={environments}
             expanded={expanded}
             dragOverId={dragOverId}
             handleDragOver={handleDragOver}
@@ -636,6 +728,10 @@ export default function App() {
             pendingInvitations={pendingInvitations}
             handleRespondToInvitation={handleRespondToInvitation}
             fetchInvitations={fetchInvitations}
+            handleCreateEnvironment={handleCreateEnvironment}
+            handleUpdateEnvironment={handleUpdateEnvironment}
+            globals={globals}
+            handleUpdateGlobals={handleUpdateGlobals}
           />
         </>
       ) : <Navigate to="/login" />} />
