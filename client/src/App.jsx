@@ -8,6 +8,7 @@ import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { api } from './api';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
+import { generateCurl, parseCurl } from './utils/curlUtils';
 import './index.css';
 
 // Helpers
@@ -240,6 +241,31 @@ export default function App() {
     await api.updateRequest(activeRequest.id, activeRequest);
     loadData();
     alert('Request saved');
+  };
+
+  const handleCopyAsCurl = () => {
+    if (!activeRequest) return;
+    const curl = generateCurl(activeRequest);
+    navigator.clipboard.writeText(curl);
+    alert('cURL command copied to clipboard');
+  };
+
+  const handleUrlPaste = (e) => {
+    const text = e.clipboardData.getData('text');
+    if (text && text.trim().toLowerCase().startsWith('curl')) {
+      e.preventDefault();
+      const parsed = parseCurl(text);
+      if (parsed) {
+        setActiveRequest(prev => ({
+          ...prev,
+          method: parsed.method,
+          url: parsed.url,
+          headers: parsed.headers.length > 0 ? parsed.headers : prev.headers,
+          params: parsed.params.length > 0 ? parsed.params : prev.params,
+          body: parsed.body || prev.body
+        }));
+      }
+    }
   };
 
   // --- DRAG AND DROP ---
@@ -521,6 +547,9 @@ export default function App() {
                   <option key={env.id} value={env.id}>{env.name}</option>
                 ))}
               </select>
+              <button className="icon-btn" style={{border: '1px solid var(--border-color)', borderRadius: '4px', padding: '4px 8px'}} onClick={handleCopyAsCurl} title="Copy as cURL">
+                <Copy size={14} /> cURL
+              </button>
               <button className="icon-btn" style={{border: '1px solid var(--border-color)', borderRadius: '4px', padding: '4px 8px'}} onClick={handleSaveRequest} title="Save">
                 <Save size={14} /> Save
               </button>
@@ -542,7 +571,8 @@ export default function App() {
                 className="url-input" 
                 value={activeRequest.url}
                 onChange={(e) => handleChange('url', e.target.value)} 
-                placeholder="Enter URL or paste text"
+                onPaste={handleUrlPaste}
+                placeholder="Enter URL or paste cURL"
               />
             </div>
             <button className="btn-primary" onClick={handleSendRequest} disabled={isSending}>
