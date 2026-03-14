@@ -1,6 +1,7 @@
-import * as proxyController from '../controllers/proxyController.js';
+import { FastifyInstance, FastifyPluginOptions } from 'fastify';
+import * as proxyController from '../controllers/proxyController.ts';
 
-export default async function (fastify, opts) {
+export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
   fastify.post('/', {
     schema: {
       body: {
@@ -12,7 +13,7 @@ export default async function (fastify, opts) {
           headers: { type: 'array' },
           params: { type: 'array' },
           body: { type: 'object', nullable: true },
-          _startTime: { type: 'number', nullable: true } // Internal tracking passed by client optionally
+          _startTime: { type: 'number', nullable: true }
         }
       }
     }

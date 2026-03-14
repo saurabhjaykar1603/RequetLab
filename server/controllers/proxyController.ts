@@ -1,10 +1,12 @@
-export const executeProxy = async (request, reply) => {
+import { FastifyRequest, FastifyReply } from 'fastify';
+
+export const executeProxy = async (request: FastifyRequest<{ Body: { url: string; method?: string; headers?: any[]; params?: any[]; body?: any; _startTime?: number } }>, reply: FastifyReply) => {
   try {
     const { url, method, headers, params, body } = request.body;
     const startTime = Date.now();
     
     // Helper to replace {{VAR}} with process.env.VAR
-    const replaceEnvVars = (str) => {
+    const replaceEnvVars = (str: any): any => {
       if (!str || typeof str !== 'string') return str;
       return str.replace(/\{\{([^}]+)\}\}/g, (match, p1) => {
         return process.env[p1] !== undefined ? process.env[p1] : match;
@@ -28,7 +30,7 @@ export const executeProxy = async (request, reply) => {
       });
     }
 
-    const options = {
+    const options: RequestInit = {
       method: method || 'GET',
       headers: fetchHeaders,
     };
@@ -45,7 +47,7 @@ export const executeProxy = async (request, reply) => {
     const response = await fetch(finalUrl, options);
     const endTime = Date.now();
     
-    const responseHeaders = {};
+    const responseHeaders: Record<string, string> = {};
     response.headers.forEach((value, key) => {
       responseHeaders[key] = value;
     });
@@ -64,7 +66,7 @@ export const executeProxy = async (request, reply) => {
       headers: responseHeaders,
       data: parsedBody
     };
-  } catch (error) {
+  } catch (error: any) {
     const time = Date.now() - (request.body._startTime || Date.now());
     return {
       status: 0,

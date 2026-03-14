@@ -2,12 +2,12 @@
   "name": "server",
   "version": "1.0.0",
   "description": "",
-  "main": "app.js",
+  "main": "app.ts",
   "scripts": {
-    "dev:server": "nodemon app.js",
+    "dev:server": "tsx --watch app.ts",
     "dev:client": "cd ../client && npm run dev",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "start": "node app.js"
+    "start": "tsx app.ts"
   },
   "keywords": [],
   "author": "",
@@ -18,12 +18,17 @@
     "dotenv": "^17.3.1",
     "fastify": "^5.8.2",
     "fastify-plugin": "^5.1.0",
-    "sqlite3": "^6.0.1",
+    "pg": "^8.20.0",
     "uuid": "^13.0.0",
     "winston": "^3.19.0"
   },
   "devDependencies": {
+    "@types/node": "^25.5.0",
+    "@types/pg": "^8.18.0",
+    "@types/uuid": "^10.0.0",
     "concurrently": "^9.2.1",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
   }
 }

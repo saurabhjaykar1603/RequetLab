@@ -1,6 +1,7 @@
-import * as environmentController from '../controllers/environmentController.js';
+import { FastifyInstance, FastifyPluginOptions } from 'fastify';
+import * as environmentController from '../controllers/environmentController.ts';
 
-export default async function (fastify, opts) {
+export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
   fastify.get('/', environmentController.getEnvironments);
 
   fastify.post('/', {
@@ -10,7 +11,7 @@ export default async function (fastify, opts) {
         required: ['name'],
         properties: {
           name: { type: 'string' },
-          variables: { type: 'object' } // Or more restrictive depending on what the UI passes
+          variables: { type: 'object' }
         }
       }
     }

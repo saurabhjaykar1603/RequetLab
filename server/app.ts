@@ -1,23 +1,23 @@
-import Fastify from 'fastify';
+import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
-import logger from './logger.js';
+import logger from './logger.ts';
 
 // Plugins
-import envWatcher from './plugins/env-watcher.js';
-import requestLogger from './plugins/request-logger.js';
+import envWatcher from './plugins/env-watcher.ts';
+import requestLogger from './plugins/request-logger.ts';
 
 // Routes
-import collectionRoutes from './routes/collectionRoutes.js';
-import folderRoutes from './routes/folderRoutes.js';
-import requestRoutes from './routes/requestRoutes.js';
-import environmentRoutes from './routes/environmentRoutes.js';
-import proxyRoutes from './routes/proxyRoutes.js';
+import collectionRoutes from './routes/collectionRoutes.ts';
+import folderRoutes from './routes/folderRoutes.ts';
+import requestRoutes from './routes/requestRoutes.ts';
+import environmentRoutes from './routes/environmentRoutes.ts';
+import proxyRoutes from './routes/proxyRoutes.ts';
 
 dotenv.config();
 
 // Initialize Fastify
-const fastify = Fastify({
+const fastify: FastifyInstance = Fastify({
   logger: false 
 });
 
@@ -40,7 +40,7 @@ fastify.register(proxyRoutes, { prefix: '/api/proxy' });
 
 const start = async () => {
   try {
-    const PORT = process.env.PORT || 3001;
+    const PORT = parseInt(process.env.PORT || '3001', 10);
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
     logger.info(`Server running on port ${PORT}`);
   } catch (err) {

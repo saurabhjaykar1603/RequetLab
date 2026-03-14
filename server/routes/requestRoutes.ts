@@ -1,6 +1,7 @@
-import * as requestController from '../controllers/requestController.js';
+import { FastifyInstance, FastifyPluginOptions } from 'fastify';
+import * as requestController from '../controllers/requestController.ts';
 
-export default async function (fastify, opts) {
+export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
   fastify.get('/', {
     schema: {
       querystring: {
@@ -23,7 +24,7 @@ export default async function (fastify, opts) {
           method: { type: 'string' },
           url: { type: 'string' },
           headers: { type: 'array' },
-          body: { type: 'object', nullable: true }, // Fastify allows nullable
+          body: { type: 'object', nullable: true },
           params: { type: 'array' },
           auth: { type: 'object' },
           preRequestScript: { type: 'string' },
@@ -41,7 +42,6 @@ export default async function (fastify, opts) {
         type: 'object',
         properties: { id: { type: 'string' } }
       },
-      // Not making required here since it's an update (PATCH-like)
       body: {
         type: 'object',
         properties: {

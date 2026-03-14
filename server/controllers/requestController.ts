@@ -1,9 +1,11 @@
-import * as requestRepository from '../repositories/requestRepository.js';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import * as requestRepository from '../repositories/requestRepository.ts';
+import { RequestEntity } from '../interfaces/request/Request.ts';
 
-export const getRequests = async (request, reply) => {
+export const getRequests = async (request: FastifyRequest<{ Querystring: { collectionId?: string, folderId?: string } }>, reply: FastifyReply) => {
   try {
-    const { collectionId, folderId } = request.query || {};
-    let requests;
+    const { collectionId, folderId } = request.query;
+    let requests: RequestEntity[];
     if (folderId) {
       requests = await requestRepository.getRequestsByFolderId(folderId);
     } else if (collectionId) {
@@ -22,27 +24,29 @@ export const getRequests = async (request, reply) => {
     }));
     
     return parsedRequests;
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: error.message });
   }
 };
 
-export const createRequest = async (request, reply) => {
+export const createRequest = async (request: FastifyRequest<{ Body: Partial<RequestEntity> & { collectionId: string } }>, reply: FastifyReply) => {
   try {
     const newRequest = await requestRepository.createRequest(request.body);
     
-    newRequest.headers = JSON.parse(newRequest.headers);
-    newRequest.params = JSON.parse(newRequest.params);
-    newRequest.body = newRequest.body ? JSON.parse(newRequest.body) : null;
-    newRequest.auth = JSON.parse(newRequest.auth);
+    if (newRequest) {
+      newRequest.headers = newRequest.headers ? JSON.parse(newRequest.headers) : [];
+      newRequest.params = newRequest.params ? JSON.parse(newRequest.params) : [];
+      newRequest.body = newRequest.body ? JSON.parse(newRequest.body) : null;
+      newRequest.auth = newRequest.auth ? JSON.parse(newRequest.auth) : {};
+    }
     
     reply.status(201).send(newRequest);
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: error.message });
   }
 };
 
-export const updateRequest = async (request, reply) => {
+export const updateRequest = async (request: FastifyRequest<{ Params: { id: string }; Body: Partial<RequestEntity> }>, reply: FastifyReply) => {
   try {
     const { id } = request.params;
     const updatedRequest = await requestRepository.updateRequest(id, request.body);
@@ -55,17 +59,17 @@ export const updateRequest = async (request, reply) => {
     }
     
     return updatedRequest;
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: error.message });
   }
 };
 
-export const deleteRequest = async (request, reply) => {
+export const deleteRequest = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   try {
     const { id } = request.params;
     await requestRepository.deleteRequest(id);
     return { success: true, id };
-  } catch (error) {
+  } catch (error: any) {
     reply.status(500).send({ error: error.message });
   }
 };

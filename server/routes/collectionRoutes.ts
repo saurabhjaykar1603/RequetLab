@@ -1,6 +1,7 @@
-import * as collectionController from '../controllers/collectionController.js';
+import { FastifyInstance, FastifyPluginOptions } from 'fastify';
+import * as collectionController from '../controllers/collectionController.ts';
 
-export default async function (fastify, opts) {
+export default async function (fastify: FastifyInstance, opts: FastifyPluginOptions) {
   fastify.get('/', collectionController.getCollections);
   
   fastify.post('/', {

@@ -1,10 +1,11 @@
+import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
 import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
-import logger from '../logger.js';
+import logger from '../logger.ts';
 
-async function envWatcherPlugin(fastify, opts) {
+const envWatcherPlugin: FastifyPluginAsync = async (fastify, opts) => {
   const envPath = path.resolve(process.cwd(), '.env');
   
   if (fs.existsSync(envPath)) {
@@ -24,6 +25,6 @@ async function envWatcherPlugin(fastify, opts) {
       done();
     });
   }
-}
+};
 
 export default fp(envWatcherPlugin);
