@@ -2,11 +2,12 @@ import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { Environment } from '../interfaces/environment/Environment.ts';
 
-export const getAllEnvironments = async (workspaceId?: string): Promise<Environment[]> => {
-  if (workspaceId) {
-    return await getQuery<Environment>('SELECT * FROM environments WHERE "workspaceId" = $1 ORDER BY "createdAt" DESC', [workspaceId]);
-  }
-  return await getQuery<Environment>('SELECT * FROM environments ORDER BY "createdAt" DESC');
+export const getAllEnvironments = async (workspaceId: string): Promise<Environment[]> => {
+  return await getQuery<Environment>('SELECT * FROM environments WHERE "workspaceId" = $1 ORDER BY "createdAt" DESC', [workspaceId]);
+};
+
+export const getEnvironmentById = async (id: string): Promise<Environment | undefined> => {
+  return await getSingleQuery<Environment>('SELECT * FROM environments WHERE id = $1', [id]);
 };
 
 export const createEnvironment = async (name: string, variables: any, workspaceId: string): Promise<Environment | undefined> => {
