@@ -108,5 +108,13 @@ export const api = {
       body: JSON.stringify(config)
     });
     return res.json();
+  },
+  importCollection: async (tree) => {
+    const res = await fetch(`${BASE_URL}/collections/import`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tree)
+    });
+    return res.json();
   }
 };

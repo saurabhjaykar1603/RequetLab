@@ -280,92 +280,105 @@ export default function App() {
     reader.onload = async (event) => {
       try {
         const data = JSON.parse(event.target.result);
-        
-        let colName = data.collection_name || data.info?.name || 'Imported Collection';
-        const newCol = await api.createCollection(colName);
+        let importTree = {
+          name: data.collection_name || data.info?.name || 'Imported Collection',
+          userId: 'user_1',
+          folders: [],
+          requests: []
+        };
 
         // Support native export format or Postman basic
         if (data.format === 'APIForge' || data.version === '1.0') {
-          // our format
+          // Native format transformation
           const folderMap = {};
           if (data.folders) {
-            for (const f of data.folders) {
-              const nf = await api.createFolder(f.name, newCol.id);
-              folderMap[f.id] = nf.id;
-            }
+            importTree.folders = data.folders.map(f => {
+              folderMap[f.id] = f.name;
+              return { name: f.name, requests: [] };
+            });
           }
           if (data.requests) {
-            for (const r of data.requests) {
-              await api.createRequest({
-                ...r,
-                collectionId: newCol.id,
-                folderId: r.folderId ? folderMap[r.folderId] : null
-              });
-            }
+            data.requests.forEach(r => {
+              const req = { ...r };
+              if (r.folderId && folderMap[r.folderId]) {
+                const folder = importTree.folders.find(f => f.name === folderMap[r.folderId]);
+                if (folder) folder.requests.push(req);
+              } else {
+                importTree.requests.push(req);
+              }
+            });
           }
         } 
         else if (data.info && data.info.schema && data.info.schema.includes('postman')) {
-          // Basic Postman v2 import
-          const traversePostman = async (items, currentFolderId = null) => {
-            for (const item of items) {
-              if (item.item) {
-                // it's a folder
-                const nf = await api.createFolder(item.name, newCol.id);
-                await traversePostman(item.item, nf.id);
-              } else if (item.request) {
-                // it's a request
-                const reqData = item.request;
-                
-                let parsedUrl = '';
-                let parsedParams = [];
-                
-                // Parse URL & URL params
-                if (typeof reqData.url === 'string') {
-                  parsedUrl = reqData.url;
-                } else if (typeof reqData.url === 'object' && reqData.url !== null) {
-                  parsedUrl = reqData.url.raw || '';
-                  if (Array.isArray(reqData.url.query)) {
-                    parsedParams = reqData.url.query.map(q => ({ key: q.key || '', value: q.value || '', description: q.description || '' }));
-                  }
-                }
-                
-                // Parse Headers
-                let parsedHeaders = [];
-                if (Array.isArray(reqData.header)) {
-                  parsedHeaders = reqData.header.map(h => ({ key: h.key || '', value: h.value || '', description: h.description || '' }));
-                }
-                
-                // Parse Body
-                let parsedBody = null;
-                if (reqData.body && reqData.body.mode) {
-                  if (reqData.body.mode === 'raw') {
-                    parsedBody = { type: 'json', content: reqData.body.raw };
-                  } else if (reqData.body.mode === 'urlencoeded') {
-                     // simplified fallback
-                    parsedBody = { type: 'none', content: '' };
-                  }
-                }
+          // Postman v2 transformation
+          const parsePostmanItem = (item) => {
+            if (item.item) {
+              // It's a folder
+              const folder = {
+                name: item.name,
+                requests: item.item.filter(i => i.request).map(i => parsePostmanRequest(i))
+              };
+              // Note: This simple version doesn't support nested folders since the server ImportTree is flat
+              // We'll flatten nested folders for now or just take the first level
+              return folder;
+            }
+            return null;
+          };
 
-                await api.createRequest({
-                  name: item.name,
-                  method: reqData.method || 'GET',
-                  url: parsedUrl,
-                  collectionId: newCol.id,
-                  folderId: currentFolderId,
-                  headers: parsedHeaders,
-                  params: parsedParams,
-                  body: parsedBody
-                });
+          const parsePostmanRequest = (item) => {
+            const reqData = item.request;
+            let parsedUrl = '';
+            let parsedParams = [];
+            
+            if (typeof reqData.url === 'string') {
+              parsedUrl = reqData.url;
+            } else if (typeof reqData.url === 'object' && reqData.url !== null) {
+              parsedUrl = reqData.url.raw || '';
+              if (Array.isArray(reqData.url.query)) {
+                parsedParams = reqData.url.query.map(q => ({ key: q.key || '', value: q.value || '', description: q.description || '' }));
               }
             }
+            
+            let parsedHeaders = [];
+            if (Array.isArray(reqData.header)) {
+              parsedHeaders = reqData.header.map(h => ({ key: h.key || '', value: h.value || '', description: h.description || '' }));
+            }
+            
+            let parsedBody = null;
+            if (reqData.body && reqData.body.mode) {
+              if (reqData.body.mode === 'raw') {
+                parsedBody = { type: 'json', content: reqData.body.raw };
+              }
+            }
+
+            return {
+              name: item.name,
+              method: reqData.method || 'GET',
+              url: parsedUrl,
+              headers: parsedHeaders,
+              params: parsedParams,
+              body: parsedBody
+            };
           };
-          await traversePostman(data.item || []);
+
+          // Flattening postman items into folders and root requests
+          if (data.item) {
+            data.item.forEach(item => {
+              if (item.item) {
+                importTree.folders.push(parsePostmanItem(item));
+              } else if (item.request) {
+                importTree.requests.push(parsePostmanRequest(item));
+              }
+            });
+          }
         }
 
+        await api.importCollection(importTree);
         setModalOpen(null);
         setModalData({});
         loadData();
       } catch (err) {
+        console.error(err);
         alert("Invalid format: " + err.message);
       }
     };
