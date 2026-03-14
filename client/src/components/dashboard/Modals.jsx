@@ -1,4 +1,4 @@
-import { X, Box } from 'lucide-react';
+import { X, Box, Trash2, AlertTriangle } from 'lucide-react';
 
 const Modals = ({
   modalOpen,
@@ -11,6 +11,7 @@ const Modals = ({
   handleImportCollection,
   handleCreateWorkspace,
   handleWorkspaceChange,
+  handleDeleteWorkspace,
   collections,
   folders,
   workspaces,
@@ -191,18 +192,61 @@ const Modals = ({
                   key={w.id} 
                   className={`workspace-option ${w.id === activeWorkspaceId ? 'active' : ''}`}
                   onClick={() => { handleWorkspaceChange(w.id); setModalOpen(null); }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
-                  <div style={{display: 'flex', alignItems: 'center', gap: '12px'}}>
+                  <div style={{display: 'flex', alignItems: 'center', gap: '12px', flex: 1}}>
                     <div className="workspace-icon">
-                      {w.type === 'team' ? <Box size={14} /> : <Box size={14} />}
+                      <Box size={14} />
                     </div>
                     <div>
                       <div style={{fontWeight: 500}}>{w.name}</div>
                       <div style={{fontSize: '11px', color: 'var(--text-secondary)'}}>{w.type}</div>
                     </div>
                   </div>
+                  <button 
+                    className="icon-btn delete-hover" 
+                    onClick={(e) => { 
+                      e.stopPropagation(); 
+                      setModalData({ ...modalData, workspaceToDelete: w });
+                      setModalOpen('workspace-delete-confirm');
+                    }}
+                    title="Delete Workspace"
+                    style={{ padding: '6px', color: 'var(--text-secondary)' }}
+                  >
+                    <Trash2 size={14} />
+                  </button>
                 </div>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {modalOpen === 'workspace-delete-confirm' && (
+        <div className="modal-overlay" onClick={() => setModalOpen('workspace-switch')}>
+          <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ef4444' }}>
+                <AlertTriangle size={20} />
+                <h3 style={{ margin: 0 }}>Delete Workspace?</h3>
+              </div>
+              <button className="icon-btn" onClick={() => setModalOpen('workspace-switch')}><X size={18}/></button>
+            </div>
+            <div className="modal-body" style={{ padding: '20px', lineHeight: '1.5' }}>
+              <p>Are you sure you want to delete <strong>{modalData.workspaceToDelete?.name}</strong>?</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                This will permanently delete all collections, folders, and requests within this workspace. This action cannot be undone.
+              </p>
+            </div>
+            <div className="modal-footer" style={{ background: 'rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="btn-secondary" onClick={() => setModalOpen('workspace-switch')}>Cancel</button>
+              <button 
+                className="btn-primary" 
+                style={{ background: '#ef4444', borderColor: '#ef4444' }}
+                onClick={() => handleDeleteWorkspace(modalData.workspaceToDelete?.id)}
+              >
+                Delete Permanently
+              </button>
             </div>
           </div>
         </div>

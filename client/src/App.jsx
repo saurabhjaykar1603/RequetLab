@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { api } from './api';
+import { useToast } from 'toast-ninja';
 import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import Dashboard from './components/dashboard/Dashboard';
@@ -14,6 +15,7 @@ const parseJSONStr = (str, fallback) => {
 };
 
 export default function App() {
+  const { showToast } = useToast();
   const [collections, setCollections] = useState([]);
   const [folders, setFolders] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -84,6 +86,7 @@ export default function App() {
     setFolders([]);
     setRequests([]);
     setActiveRequest(null);
+    showToast({ message: 'Logged out successfully', type: 'info' });
   };
 
   const handleWorkspaceChange = (id) => {
@@ -98,10 +101,39 @@ export default function App() {
       if (res.error) throw new Error(res.error);
       setModalOpen(null);
       setModalData({});
-      loadData();
+      await loadData();
       handleWorkspaceChange(res.id);
+      showToast({ message: 'Workspace created!', type: 'success' });
     } catch (err) {
-      alert(err.message);
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
+  const handleDeleteWorkspace = async (id) => {
+    try {
+      const res = await api.deleteWorkspace(id);
+      if (res.error) throw new Error(res.error);
+      
+      const updatedWorkspaces = workspaces.filter(w => w.id !== id);
+      setWorkspaces(updatedWorkspaces);
+      
+      if (id === activeWorkspaceId) {
+        if (updatedWorkspaces.length > 0) {
+          handleWorkspaceChange(updatedWorkspaces[0].id);
+        } else {
+          setActiveWorkspaceId('');
+          localStorage.removeItem('activeWorkspaceId');
+          setCollections([]);
+          setFolders([]);
+          setRequests([]);
+          setActiveRequest(null);
+        }
+      }
+      
+      showToast({ message: 'Workspace deleted', type: 'success' });
+      setModalOpen(null);
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
     }
   };
 
@@ -228,14 +260,14 @@ export default function App() {
     if (!activeRequest) return;
     await api.updateRequest(activeRequest.id, activeRequest);
     loadData();
-    alert('Request saved');
+    showToast({ message: 'Request saved', type: 'success' });
   };
 
   const handleCopyAsCurl = () => {
     if (!activeRequest) return;
     const curl = generateCurl(activeRequest);
     navigator.clipboard.writeText(curl);
-    alert('cURL command copied to clipboard');
+    showToast({ message: 'cURL copied!', type: 'info' });
   };
 
   const handleUrlPaste = (e) => {
@@ -252,6 +284,7 @@ export default function App() {
           params: parsed.params.length > 0 ? parsed.params : prev.params,
           body: parsed.body || prev.body
         }));
+        showToast({ message: 'cURL parsed successfully', type: 'success' });
       }
     }
   };
@@ -284,6 +317,7 @@ export default function App() {
     setRequests(prev => prev.map(r => r.id === currentReq.id ? { ...r, ...updatePayload } : r));
     await api.updateRequest(currentReq.id, updatePayload);
     loadData();
+    showToast({ message: 'Request moved', type: 'info' });
   };
 
   const handleExportCollection = (collection) => {
@@ -307,6 +341,7 @@ export default function App() {
     a.download = `${collection.name.replace(/\s+/g, '_')}_collection.json`;
     a.click();
     URL.revokeObjectURL(url);
+    showToast({ message: 'Collection exported', type: 'success' });
   };
 
   const handleImportCollection = async (e) => {
@@ -327,8 +362,9 @@ export default function App() {
         setModalOpen(null);
         setModalData({});
         loadData();
+        showToast({ message: 'Collection imported!', type: 'success' });
       } catch (err) {
-        alert("Invalid format: " + err.message);
+        showToast({ message: "Invalid format: " + err.message, type: 'error' });
       }
     };
     reader.readAsText(file);
@@ -432,6 +468,7 @@ export default function App() {
             folders={folders}
             workspaces={workspaces}
             activeWorkspaceId={activeWorkspaceId}
+            handleDeleteWorkspace={handleDeleteWorkspace}
           />
         </>
       ) : <Navigate to="/login" />} />

@@ -42,3 +42,13 @@ export const addMember = async (request: FastifyRequest<{ Params: { id: string }
     return reply.status(500).send({ error: error.message });
   }
 };
+
+export const deleteWorkspace = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
+  try {
+    const { id } = request.params;
+    await workspaceRepository.deleteWorkspace(id);
+    return reply.status(200).send({ success: true });
+  } catch (error: any) {
+    return reply.status(500).send({ error: error.message });
+  }
+};

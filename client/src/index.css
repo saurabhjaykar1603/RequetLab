@@ -705,11 +705,17 @@ body {
 }
 
 .workspace-option:hover {
-  background-color: var(--bg-hover);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .workspace-option.active {
-  background-color: var(--bg-active-light);
+  background: rgba(239, 104, 25, 0.1);
+  border-left: 3px solid var(--accent-color);
+}
+
+.delete-hover:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+  color: #ef4444 !important;
 }
 
 .workspace-icon {

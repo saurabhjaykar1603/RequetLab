@@ -45,6 +45,13 @@ export const api = {
     });
     return res.json();
   },
+  deleteWorkspace: async (id) => {
+    const res = await fetch(`${BASE_URL}/workspaces/${id}`, {
+      method: 'DELETE',
+      headers: getHeaders()
+    });
+    return res.json();
+  },
 
   // Collections
   getCollections: async () => {

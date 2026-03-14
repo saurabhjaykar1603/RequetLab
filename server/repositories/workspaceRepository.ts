@@ -27,6 +27,14 @@ export const findWorkspaceById = async (id: string): Promise<Workspace | undefin
   return await getSingleQuery<Workspace>(sql, [id]);
 };
 
+export const deleteWorkspace = async (id: string) => {
+  // SQLite doesn't always have FK cascade enabled, so we might need to delete members manually
+  // or rely on the schema if it's set up correctly. Let's delete members first to be safe.
+  await runQuery('DELETE FROM workspace_members WHERE "workspaceId" = $1', [id]);
+  const sql = 'DELETE FROM workspaces WHERE id = $1';
+  await runQuery(sql, [id]);
+};
+
 export const addMemberToWorkspace = async (workspaceId: string, userId: string, role: 'admin' | 'member' = 'member') => {
   const sql = 'INSERT INTO workspace_members ("workspaceId", "userId", role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING';
   await runQuery(sql, [workspaceId, userId, role]);
