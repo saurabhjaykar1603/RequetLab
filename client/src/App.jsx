@@ -2,9 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Folder, FolderOpen, Play, Copy, Trash2, Plus, GripVertical, 
   ChevronRight, ChevronDown, Download, Upload, Server, Clock, 
-  Search, X, Save, Box, History, Link, Sun, Moon
+  Search, X, Save, Box, History, Link as LucideLink, Sun, Moon
 } from 'lucide-react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { api } from './api';
+import Login from './components/auth/Login';
+import Signup from './components/auth/Signup';
 import './index.css';
 
 // Helpers
@@ -77,35 +80,6 @@ export default function App() {
     if (user) loadData();
   }, [user, activeWorkspaceId]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.login(modalData.email, modalData.password);
-      if (res.error) throw new Error(res.error);
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('user', JSON.stringify(res.user));
-      setUser(res.user);
-      setModalOpen(null);
-      setModalData({});
-    } catch (err) {
-      alert(err.message);
-    }
-  };
-
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.signup(modalData.name, modalData.email, modalData.password);
-      if (res.error) throw new Error(res.error);
-      localStorage.setItem('token', res.token);
-      localStorage.setItem('user', JSON.stringify(res.user));
-      setUser(res.user);
-      setModalOpen(null);
-      setModalData({});
-    } catch (err) {
-      alert(err.message);
-    }
-  };
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -707,79 +681,7 @@ export default function App() {
     );
   }
 
-  if (!user) {
-    return (
-      <div className="login-screen">
-        <div className="login-card">
-          <img src="/logo.png" alt="Logo" style={{height: '48px', marginBottom: '16px'}} />
-          <h1>Welcome to RequestLab</h1>
-          <p>Collaborative API Client</p>
-          <div style={{display: 'flex', gap: '12px', marginTop: '24px', width: '100%'}}>
-            <button className="btn-primary" style={{flex: 1}} onClick={() => setModalOpen('login')}>Log In</button>
-            <button className="btn-secondary" style={{flex: 1}} onClick={() => setModalOpen('signup')}>Sign Up</button>
-          </div>
-        </div>
-
-        {modalOpen === 'login' && (
-          <div className="modal-overlay" onClick={() => setModalOpen(null)}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>Log In</h3>
-                <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
-              </div>
-              <form onSubmit={handleLogin}>
-                <div className="modal-body">
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input type="email" required value={modalData.email || ''} onChange={e => setModalData({...modalData, email: e.target.value})} />
-                  </div>
-                  <div className="form-group">
-                    <label>Password</label>
-                    <input type="password" required value={modalData.password || ''} onChange={e => setModalData({...modalData, password: e.target.value})} />
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="submit" className="btn-primary">Log In</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {modalOpen === 'signup' && (
-          <div className="modal-overlay" onClick={() => setModalOpen(null)}>
-            <div className="modal" onClick={e => e.stopPropagation()}>
-              <div className="modal-header">
-                <h3>Sign Up</h3>
-                <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
-              </div>
-              <form onSubmit={handleSignup}>
-                <div className="modal-body">
-                  <div className="form-group">
-                    <label>Full Name</label>
-                    <input type="text" required value={modalData.name || ''} onChange={e => setModalData({...modalData, name: e.target.value})} />
-                  </div>
-                  <div className="form-group">
-                    <label>Email</label>
-                    <input type="email" required value={modalData.email || ''} onChange={e => setModalData({...modalData, email: e.target.value})} />
-                  </div>
-                  <div className="form-group">
-                    <label>Password</label>
-                    <input type="password" required value={modalData.password || ''} onChange={e => setModalData({...modalData, password: e.target.value})} />
-                  </div>
-                </div>
-                <div className="modal-footer">
-                  <button type="submit" className="btn-primary">Sign Up</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  return (
+  const Dashboard = () => (
     <div className="app-container">
       {/* THIN NAV BAR */}
       <div className="nav-bar">
@@ -798,15 +700,17 @@ export default function App() {
           </div>
         </div>
         <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center'}}>
-           <div className="user-profile" title={user.name}>
-             {user.name.charAt(0).toUpperCase()}
-           </div>
-          <div className="nav-item" onClick={() => setTheme(t => t === 'light' ? 'dark' : 'light')}>
-            {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+           {user && (
+             <div className="user-profile" title={user.name}>
+               {user.name.charAt(0).toUpperCase()}
+             </div>
+           )}
+          <div className="nav-item" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+            {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             <span>Theme</span>
           </div>
           <div className="nav-item" onClick={handleLogout} title="Logout">
-            <X size={20} />
+            <LucideLink size={20} />
             <span>Logout</span>
           </div>
         </div>
@@ -833,11 +737,12 @@ export default function App() {
         </div>
 
         <div className="search-bar">
-          <Search />
+          <Search size={14} style={{position: 'absolute', left: '12px', color: 'var(--text-secondary)'}} />
           <input 
             placeholder="Search collections" 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            style={{paddingLeft: '36px'}}
           />
         </div>
 
@@ -1109,7 +1014,14 @@ export default function App() {
           </div>
         </div>
       )}
-
     </div>
+  );
+
+  return (
+    <Routes>
+      <Route path="/login" element={!user ? <Login onLoginSuccess={setUser} /> : <Navigate to="/" />} />
+      <Route path="/signup" element={!user ? <Signup onSignupSuccess={setUser} /> : <Navigate to="/" />} />
+      <Route path="/" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+    </Routes>
   );
 }
