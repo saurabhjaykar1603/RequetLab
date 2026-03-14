@@ -27,7 +27,15 @@ const CustomSelect = ({
 
   return (
     <div className={`custom-select-container ${className}`} ref={dropdownRef}>
-    
+      <div 
+        className={`custom-select-header ${isOpen ? 'active' : ''}`} 
+        onClick={() => setIsOpen(!isOpen)}
+      >
+        <div className="custom-select-value">
+          {renderValue(selectedOption)}
+        </div>
+        <ChevronDown size={14} className={`chevron ${isOpen ? 'rotate' : ''}`} />
+      </div>
 
       {isOpen && (
         <div className="custom-select-dropdown">

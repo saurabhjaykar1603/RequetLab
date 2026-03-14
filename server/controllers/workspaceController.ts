@@ -52,7 +52,11 @@ export const addMember = async (request: FastifyRequest<{ Params: { id: string }
     const user = await authRepository.findUserByEmail(email);
     if (!user) return reply.status(404).send({ error: 'User with this email not found' });
 
-    // 4. Create invitation instead of direct membership
+    // 4. Check if user is already a member
+    const existingRole = await workspaceRepository.getMemberRole(id, user.id);
+    if (existingRole) return reply.status(400).send({ error: 'User is already a member of this workspace' });
+
+    // 5. Create invitation instead of direct membership
     const invitation = await workspaceRepository.createInvitation(id, inviterId, user.id, role || 'member');
     return { success: true, user: { name: user.name, email: user.email }, invitation };
   } catch (error: any) {

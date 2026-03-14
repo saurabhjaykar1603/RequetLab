@@ -56,6 +56,9 @@ export const getMemberRole = async (workspaceId: string, userId: string): Promis
 };
 
 export const removeMemberFromWorkspace = async (workspaceId: string, userId: string) => {
+  // Clear any invitation records for this user in this workspace
+  await runQuery('DELETE FROM workspace_invitations WHERE "workspaceId" = $1 AND "inviteeId" = $2', [workspaceId, userId]);
+  
   const sql = 'DELETE FROM workspace_members WHERE "workspaceId" = $1 AND "userId" = $2';
   await runQuery(sql, [workspaceId, userId]);
 };
