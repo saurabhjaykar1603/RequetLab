@@ -17,6 +17,8 @@ export default async function (fastify: FastifyInstance, opts: FastifyPluginOpti
     }
   }, collectionController.createCollection);
 
+  fastify.post('/import', collectionController.importCollection);
+
   fastify.put('/:id', {
     schema: {
       params: {

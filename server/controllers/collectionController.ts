@@ -1,5 +1,6 @@
 import { FastifyRequest, FastifyReply } from 'fastify';
 import * as collectionRepository from '../repositories/collectionRepository.ts';
+import * as importRepository from '../repositories/importRepository.ts';
 import { Collection } from '../interfaces/collection/Collection.ts';
 
 export const getCollections = async (request: FastifyRequest, reply: FastifyReply) => {
@@ -16,6 +17,15 @@ export const createCollection = async (request: FastifyRequest<{ Body: { name: s
     const { name, userId } = request.body;
     const newCollection = await collectionRepository.createCollection(name, userId);
     reply.status(201).send(newCollection);
+  } catch (error: any) {
+    reply.status(500).send({ error: error.message });
+  }
+};
+
+export const importCollection = async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
+  try {
+    const result = await importRepository.importCollectionTree(request.body as any);
+    reply.status(201).send(result);
   } catch (error: any) {
     reply.status(500).send({ error: error.message });
   }

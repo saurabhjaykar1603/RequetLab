@@ -117,4 +117,19 @@ export const getSingleQuery = async <T>(sql: string, params: any[] = []): Promis
   return result.rows[0];
 };
 
+export const withTransaction = async <T>(callback: (client: any) => Promise<T>): Promise<T> => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+};
+
 export { pool as db };
