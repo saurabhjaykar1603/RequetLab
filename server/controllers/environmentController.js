@@ -1,24 +1,24 @@
 import * as environmentRepository from '../repositories/environmentRepository.js';
 
-export const getEnvironments = async (req, res) => {
+export const getEnvironments = async (request, reply) => {
   try {
     const environments = await environmentRepository.getAllEnvironments();
-    res.json(environments.map(e => ({
+    return environments.map(e => ({
       ...e,
       variables: e.variables ? JSON.parse(e.variables) : {}
-    })));
+    }));
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
 
-export const createEnvironment = async (req, res) => {
+export const createEnvironment = async (request, reply) => {
   try {
-    const { name, variables } = req.body;
+    const { name, variables } = request.body;
     const newEnv = await environmentRepository.createEnvironment(name, variables);
     newEnv.variables = JSON.parse(newEnv.variables);
-    res.status(201).json(newEnv);
+    reply.status(201).send(newEnv);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };

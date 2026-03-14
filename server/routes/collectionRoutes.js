@@ -1,11 +1,43 @@
-import express from 'express';
 import * as collectionController from '../controllers/collectionController.js';
 
-const router = express.Router();
+export default async function (fastify, opts) {
+  fastify.get('/', collectionController.getCollections);
+  
+  fastify.post('/', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string' },
+          userId: { type: 'string' }
+        }
+      }
+    }
+  }, collectionController.createCollection);
 
-router.get('/', collectionController.getCollections);
-router.post('/', collectionController.createCollection);
-router.put('/:id', collectionController.updateCollection);
-router.delete('/:id', collectionController.deleteCollection);
+  fastify.put('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } }
+      },
+      body: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string' }
+        }
+      }
+    }
+  }, collectionController.updateCollection);
 
-export default router;
+  fastify.delete('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } }
+      }
+    }
+  }, collectionController.deleteCollection);
+}

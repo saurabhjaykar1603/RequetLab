@@ -1,6 +1,6 @@
-export const executeProxy = async (req, res) => {
+export const executeProxy = async (request, reply) => {
   try {
-    const { url, method, headers, params, body } = req.body;
+    const { url, method, headers, params, body } = request.body;
     const startTime = Date.now();
     
     // Helper to replace {{VAR}} with process.env.VAR
@@ -56,23 +56,23 @@ export const executeProxy = async (req, res) => {
       parsedBody = JSON.parse(bodyText); 
     } catch(e) {}
 
-    res.json({
+    return {
       status: response.status,
       statusText: response.statusText,
       time: endTime - startTime,
       size: bodyText.length,
       headers: responseHeaders,
       data: parsedBody
-    });
+    };
   } catch (error) {
-    const time = Date.now() - (req.body._startTime || Date.now());
-    res.json({
+    const time = Date.now() - (request.body._startTime || Date.now());
+    return {
       status: 0,
       statusText: 'Error',
       time,
       size: 0,
       headers: {},
       data: error.message
-    });
+    };
   }
 };

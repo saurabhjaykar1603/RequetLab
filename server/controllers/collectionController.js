@@ -1,41 +1,41 @@
 import * as collectionRepository from '../repositories/collectionRepository.js';
 
-export const getCollections = async (req, res) => {
+export const getCollections = async (request, reply) => {
   try {
     const collections = await collectionRepository.getAllCollections();
-    res.json(collections);
+    return collections; // Fastify automatically strings to JSON and sends 200
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
 
-export const createCollection = async (req, res) => {
+export const createCollection = async (request, reply) => {
   try {
-    const { name, userId } = req.body;
+    const { name, userId } = request.body;
     const newCollection = await collectionRepository.createCollection(name, userId);
-    res.status(201).json(newCollection);
+    reply.status(201).send(newCollection);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
 
-export const updateCollection = async (req, res) => {
+export const updateCollection = async (request, reply) => {
   try {
-    const { id } = req.params;
-    const { name } = req.body;
+    const { id } = request.params;
+    const { name } = request.body;
     const updatedCollection = await collectionRepository.updateCollection(id, name);
-    res.json(updatedCollection);
+    return updatedCollection;
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
 
-export const deleteCollection = async (req, res) => {
+export const deleteCollection = async (request, reply) => {
   try {
-    const { id } = req.params;
+    const { id } = request.params;
     await collectionRepository.deleteCollection(id);
-    res.json({ success: true, id });
+    return { success: true, id };
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };

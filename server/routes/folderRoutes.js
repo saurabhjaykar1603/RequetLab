@@ -1,11 +1,52 @@
-import express from 'express';
 import * as folderController from '../controllers/folderController.js';
 
-const router = express.Router();
+export default async function (fastify, opts) {
+  fastify.get('/', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          collectionId: { type: 'string' }
+        }
+      }
+    }
+  }, folderController.getFolders);
 
-router.get('/', folderController.getFolders);
-router.post('/', folderController.createFolder);
-router.put('/:id', folderController.updateFolder);
-router.delete('/:id', folderController.deleteFolder);
+  fastify.post('/', {
+    schema: {
+      body: {
+        type: 'object',
+        required: ['name', 'collectionId'],
+        properties: {
+          name: { type: 'string' },
+          collectionId: { type: 'string' }
+        }
+      }
+    }
+  }, folderController.createFolder);
 
-export default router;
+  fastify.put('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } }
+      },
+      body: {
+        type: 'object',
+        required: ['name'],
+        properties: {
+          name: { type: 'string' }
+        }
+      }
+    }
+  }, folderController.updateFolder);
+
+  fastify.delete('/:id', {
+    schema: {
+      params: {
+        type: 'object',
+        properties: { id: { type: 'string' } }
+      }
+    }
+  }, folderController.deleteFolder);
+}

@@ -1,8 +1,8 @@
 import * as requestRepository from '../repositories/requestRepository.js';
 
-export const getRequests = async (req, res) => {
+export const getRequests = async (request, reply) => {
   try {
-    const { collectionId, folderId } = req.query;
+    const { collectionId, folderId } = request.query || {};
     let requests;
     if (folderId) {
       requests = await requestRepository.getRequestsByFolderId(folderId);
@@ -21,31 +21,31 @@ export const getRequests = async (req, res) => {
       auth: r.auth ? JSON.parse(r.auth) : {}
     }));
     
-    res.json(parsedRequests);
+    return parsedRequests;
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
 
-export const createRequest = async (req, res) => {
+export const createRequest = async (request, reply) => {
   try {
-    const newRequest = await requestRepository.createRequest(req.body);
+    const newRequest = await requestRepository.createRequest(request.body);
     
     newRequest.headers = JSON.parse(newRequest.headers);
     newRequest.params = JSON.parse(newRequest.params);
     newRequest.body = newRequest.body ? JSON.parse(newRequest.body) : null;
     newRequest.auth = JSON.parse(newRequest.auth);
     
-    res.status(201).json(newRequest);
+    reply.status(201).send(newRequest);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
 
-export const updateRequest = async (req, res) => {
+export const updateRequest = async (request, reply) => {
   try {
-    const { id } = req.params;
-    const updatedRequest = await requestRepository.updateRequest(id, req.body);
+    const { id } = request.params;
+    const updatedRequest = await requestRepository.updateRequest(id, request.body);
     
     if (updatedRequest) {
       updatedRequest.headers = updatedRequest.headers ? JSON.parse(updatedRequest.headers) : [];
@@ -54,18 +54,18 @@ export const updateRequest = async (req, res) => {
       updatedRequest.auth = updatedRequest.auth ? JSON.parse(updatedRequest.auth) : {};
     }
     
-    res.json(updatedRequest);
+    return updatedRequest;
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
 
-export const deleteRequest = async (req, res) => {
+export const deleteRequest = async (request, reply) => {
   try {
-    const { id } = req.params;
+    const { id } = request.params;
     await requestRepository.deleteRequest(id);
-    res.json({ success: true, id });
+    return { success: true, id };
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    reply.status(500).send({ error: error.message });
   }
 };
