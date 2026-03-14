@@ -1,0 +1,213 @@
+import { 
+  Folder, FolderOpen, Copy, Trash2, Plus, 
+  ChevronRight, ChevronDown, Download, Server, 
+  Search, Box, History, Link as LucideLink, Sun, Moon
+} from 'lucide-react';
+import RequestEditor from './RequestEditor';
+
+const Dashboard = ({
+  user,
+  activeTab,
+  setActiveTab,
+  environments,
+  activeEnvId,
+  setActiveEnvId,
+  workspaces,
+  activeWorkspaceId,
+  setModalOpen,
+  searchQuery,
+  setSearchQuery,
+  tree,
+  toggleExpand,
+  handleExportCollection,
+  handleDeleteCollection,
+  handleDeleteFolder,
+  handleDeleteRequest,
+  handleDuplicateRequest,
+  activeRequest,
+  setActiveRequest,
+  expanded,
+  dragOverId,
+  handleDragOver,
+  handleDrop,
+  handleDragStart,
+  theme,
+  setTheme,
+  handleLogout,
+  handleSaveRequest,
+  handleCopyAsCurl,
+  handleUrlPaste,
+  isSending,
+  response,
+  editorTab,
+  setEditorTab,
+  handleSendRequest
+}) => (
+  <div className="app-container">
+    {/* THIN NAV BAR */}
+    <div className="nav-bar">
+      <div style={{display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center'}}>
+        <div className={`nav-item ${activeTab === 'collections' ? 'active' : ''}`} onClick={() => setActiveTab('collections')}>
+          <Box size={20} />
+          <span>Collections</span>
+        </div>
+        <div className={`nav-item ${activeTab === 'environments' ? 'active' : ''}`} onClick={() => setActiveTab('environments')}>
+          <Server size={20} />
+          <span>Environments</span>
+        </div>
+        <div className="nav-item">
+          <History size={20} />
+          <span>History</span>
+        </div>
+      </div>
+      <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center'}}>
+         {user && (
+           <div className="user-profile" title={user.name}>
+             {user.name.charAt(0).toUpperCase()}
+           </div>
+         )}
+        <div className="nav-item" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          <span>Theme</span>
+        </div>
+        <div className="nav-item" onClick={handleLogout} title="Logout">
+          <LucideLink size={20} />
+          <span>Logout</span>
+        </div>
+      </div>
+    </div>
+
+    {/* SIDEBAR */}
+    <div className="sidebar">
+      <div className="sidebar-header" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '12px'}}>
+        <div style={{display: 'flex', alignItems: 'center', gap: '8px', width: '100%'}}>
+          <div className="workspace-selector" onClick={() => setModalOpen('workspace-switch')}>
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
+              <Box size={16} />
+              <span style={{fontWeight: 600, fontSize: '14px'}}>{workspaces.find(w => w.id === activeWorkspaceId)?.name || 'Select Workspace'}</span>
+            </div>
+            <ChevronDown size={14} />
+          </div>
+          <button className="icon-btn" onClick={() => setModalOpen('workspace')} title="New Workspace"><Plus size={18} /></button>
+        </div>
+        
+        <div style={{display: 'flex', gap: '4px', width: '100%'}}>
+          <button className="btn-secondary" onClick={() => setModalOpen('collection')} style={{flex: 1, padding: '4px 8px'}}><Plus size={14} /> New</button>
+          <button className="btn-secondary" onClick={() => setModalOpen('import')} style={{flex: 1, padding: '4px 8px'}}>Import</button>
+        </div>
+      </div>
+
+      <div className="search-bar">
+        <Search size={14} />
+        <input 
+          placeholder="Search collections" 
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
+
+      <div className="sidebar-content">
+        {activeTab === 'collections' && tree.map(col => (
+          <div key={col.id} className="collection-item">
+            <div 
+              className={`collection-header ${dragOverId === `col-${col.id}` ? 'drag-over' : ''}`}
+              onClick={() => toggleExpand(col.id)}
+              onDragOver={(e) => handleDragOver(e, `col-${col.id}`)}
+              onDrop={(e) => handleDrop(e, { type: 'collection', id: col.id })}
+            >
+              {expanded[col.id] ? <ChevronDown size={16} style={{marginRight: '8px', color: 'var(--text-secondary)'}}/> : <ChevronRight size={16} style={{marginRight: '8px', color: 'var(--text-secondary)'}}/>}
+              <span style={{flex: 1}}>{col.name}</span>
+              <div className="item-actions">
+                <button className="icon-btn" onClick={(e) => { e.stopPropagation(); handleExportCollection(col); }} title="Export"><Download size={14} /></button>
+                <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalOpen('folder'); }} title="New Folder"><Folder size={14} /></button>
+                <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalOpen('request'); }} title="New Request"><Plus size={14} /></button>
+                <button className="icon-btn" onClick={(e) => handleDeleteCollection(col.id, e)}><Trash2 size={14} /></button>
+              </div>
+            </div>
+
+            {expanded[col.id] && (
+              <div>
+                {col.folders.map(folder => (
+                  <div key={folder.id}>
+                    <div 
+                      className={`folder-header ${dragOverId === `fld-${folder.id}` ? 'drag-over' : ''}`}
+                      onClick={() => toggleExpand(folder.id)}
+                      onDragOver={(e) => handleDragOver(e, `fld-${folder.id}`)}
+                      onDrop={(e) => handleDrop(e, { type: 'folder', id: folder.id, collectionId: col.id })}
+                    >
+                      {expanded[folder.id] ? <FolderOpen size={14} style={{marginRight: '8px'}}/> : <Folder size={14} style={{marginRight: '8px'}}/>}
+                      <span style={{flex: 1}}>{folder.name}</span>
+                      <div className="item-actions">
+                        <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalOpen('request'); }} title="New Request"><Plus size={14} /></button>
+                        <button className="icon-btn" onClick={(e) => handleDeleteFolder(folder.id, e)}><Trash2 size={14} /></button>
+                      </div>
+                    </div>
+
+                    {expanded[folder.id] && folder.requests.map(req => (
+                      <div 
+                        key={req.id} 
+                        draggable
+                        onDragStart={(e) => handleDragStart(e, { type: 'request', id: req.id })}
+                        className={`request-item ${activeRequest?.id === req.id ? 'active' : ''}`}
+                        onClick={() => setActiveRequest(req)}
+                      >
+                        <span className={`method-badge method-${req.method}`}>{req.method}</span>
+                        <div className="name-wrapper">
+                          <span>{req.name}</span>
+                        </div>
+                        <div className="item-actions">
+                          <button className="icon-btn" onClick={(e) => handleDuplicateRequest(req, e)} title="Duplicate"><Copy size={14} /></button>
+                          <button className="icon-btn" onClick={(e) => handleDeleteRequest(req.id, e)}><Trash2 size={14} /></button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
+
+                {col.requests.map(req => (
+                  <div 
+                    key={req.id} 
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, { type: 'request', id: req.id })}
+                    className={`request-item standalone-in-collection ${activeRequest?.id === req.id ? 'active' : ''}`}
+                    onClick={() => setActiveRequest(req)}
+                  >
+                    <span className={`method-badge method-${req.method}`}>{req.method}</span>
+                    <div className="name-wrapper">
+                      <span>{req.name}</span>
+                    </div>
+                    <div className="item-actions">
+                      <button className="icon-btn" onClick={(e) => handleDuplicateRequest(req, e)} title="Duplicate"><Copy size={14} /></button>
+                      <button className="icon-btn" onClick={(e) => handleDeleteRequest(req.id, e)}><Trash2 size={14} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+
+    {/* MAIN PANEL */}
+    <div className="main-panel">
+      <RequestEditor 
+        activeRequest={activeRequest}
+        setActiveRequest={setActiveRequest}
+        environments={environments}
+        activeEnvId={activeEnvId}
+        setActiveEnvId={setActiveEnvId}
+        handleSaveRequest={handleSaveRequest}
+        handleCopyAsCurl={handleCopyAsCurl}
+        handleUrlPaste={handleUrlPaste}
+        handleSendRequest={handleSendRequest}
+        isSending={isSending}
+        response={response}
+        editorTab={editorTab}
+        setEditorTab={setEditorTab}
+      />
+    </div>
+  </div>
+);
+
+export default Dashboard;
