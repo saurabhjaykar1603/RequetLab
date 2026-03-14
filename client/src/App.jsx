@@ -648,7 +648,10 @@ export default function App() {
       {/* SIDEBAR */}
       <div className="sidebar">
         <div className="sidebar-header">
-          <h2>RequestLab</h2>
+          <div style={{display: 'flex', alignItems: 'center', gap: '8px'}}>
+            <img src="/logo.png" alt="RequestLab Logo" style={{height: '24px', width: '24px'}} />
+            <h2 style={{margin: 0}}>RequestLab</h2>
+          </div>
           <div style={{display: 'flex', gap: '4px'}}>
             <button className="btn-secondary" onClick={() => setModalOpen('collection')} style={{padding: '4px 8px'}}><Plus size={14} /> New</button>
             <button className="btn-secondary" onClick={() => setModalOpen('import')} style={{padding: '4px 8px'}}>Import</button>
