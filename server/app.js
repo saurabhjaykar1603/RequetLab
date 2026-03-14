@@ -34,7 +34,10 @@ const fastify = Fastify({
 });
 
 // Register Plugins
-fastify.register(cors);
+fastify.register(cors, {
+  origin: true, // Allow all origins (for dev)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Explicitly allow DELETE
+});
 
 // Request Logging Hook (mimicking standard logger behavior)
 fastify.addHook('onRequest', (request, reply, done) => {
