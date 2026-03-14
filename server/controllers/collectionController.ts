@@ -27,7 +27,9 @@ export const createCollection = async (request: FastifyRequest<{ Body: { name: s
 
 export const importCollection = async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
   try {
-    const result = await importRepository.importCollectionTree(request.body as any);
+    const userId = (request as any).user?.id || '';
+    const workspaceId = request.headers['x-workspace-id'] as string;
+    const result = await importRepository.importCollectionTree(request.body as any, userId, workspaceId);
     reply.status(201).send(result);
   } catch (error: any) {
     reply.status(500).send({ error: error.message });

@@ -12,14 +12,14 @@ interface ImportTree {
   requests?: Partial<RequestEntity>[];
 }
 
-export const importCollectionTree = async (tree: ImportTree) => {
+export const importCollectionTree = async (tree: ImportTree, userId: string, workspaceId: string) => {
   return await withTransaction(async (client) => {
     const collectionId = uuidv4();
     
     // 1. Insert Collection
     await client.query(
-      'INSERT INTO collections (id, name, "userId") VALUES ($1, $2, $3)',
-      [collectionId, tree.name, tree.userId || '']
+      'INSERT INTO collections (id, name, "userId", "workspaceId") VALUES ($1, $2, $3, $4)',
+      [collectionId, tree.name, userId, workspaceId]
     );
 
     // 2. Insert Root Requests
