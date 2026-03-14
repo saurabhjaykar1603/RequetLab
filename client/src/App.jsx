@@ -21,6 +21,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('collections'); // collections, history, environments
   const [expanded, setExpanded] = useState({}); // { [id]: boolean }
   const [activeRequest, setActiveRequest] = useState(null);
+  const [activeEnvId, setActiveEnvId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
   // Editor Tabs
@@ -368,12 +369,38 @@ export default function App() {
       setIsSending(true);
       setResponse(null);
       try {
+        const activeEnv = environments.find(e => e.id === activeEnvId);
+        
+        const replaceVars = (str) => {
+          if (!str || typeof str !== 'string') return str;
+          let res = str;
+          if (activeEnv && activeEnv.variables) {
+            Object.entries(activeEnv.variables).forEach(([k, v]) => {
+              res = res.replace(new RegExp(`{{${k}}}`, 'g'), v);
+            });
+          }
+          return res;
+        };
+
+        const subUrl = replaceVars(activeRequest.url);
+        const subHeaders = (activeRequest.headers || []).map(h => ({
+          ...h, value: replaceVars(h.value)
+        }));
+        const subParams = (activeRequest.params || []).map(p => ({
+          ...p, value: replaceVars(p.value)
+        }));
+        
+        let subBody = activeRequest.body;
+        if (subBody && subBody.type === 'json' && subBody.content) {
+          subBody = { ...subBody, content: replaceVars(subBody.content) };
+        }
+
         const res = await api.executeRequest({
-          url: activeRequest.url,
+          url: subUrl,
           method: activeRequest.method,
-          headers: activeRequest.headers,
-          params: activeRequest.params,
-          body: activeRequest.body
+          headers: subHeaders,
+          params: subParams,
+          body: subBody
         });
         setResponse(res);
       } catch (err) {
@@ -389,6 +416,16 @@ export default function App() {
           <div className="request-title-bar">
             <h3>{activeRequest.name}</h3>
             <div style={{display: 'flex', gap: '8px'}}>
+              <select 
+                style={{padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', outline: 'none'}}
+                value={activeEnvId}
+                onChange={e => setActiveEnvId(e.target.value)}
+              >
+                <option value="">No environment</option>
+                {environments.map(env => (
+                  <option key={env.id} value={env.id}>{env.name}</option>
+                ))}
+              </select>
               <button className="icon-btn" style={{border: '1px solid var(--border-color)', borderRadius: '4px', padding: '4px 8px'}} onClick={handleSaveRequest} title="Save">
                 <Save size={14} /> Save
               </button>
