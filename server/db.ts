@@ -167,6 +167,10 @@ const initializeDb = async () => {
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    // Create indexes for activity logs to ensure performance as the table grows
+    await client.query('CREATE INDEX IF NOT EXISTS idx_activity_logs_workspace_id ON activity_logs ("workspaceId")');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs ("createdAt")');
+
     await client.query('COMMIT');
     console.log('PostgreSQL database and tables initialized.');
   } catch (err: any) {
