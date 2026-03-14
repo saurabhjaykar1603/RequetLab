@@ -82,7 +82,7 @@ export const api = {
   respondToInvitation: async (invitationId, status) => {
     const res = await fetch(`${BASE_URL}/workspaces/invitations/${invitationId}/respond`, {
       method: 'POST',
-      headers: getHeaders(),
+      headers: getPostHeaders(),
       body: JSON.stringify({ status })
     });
     return res.json();

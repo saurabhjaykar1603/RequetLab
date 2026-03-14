@@ -74,6 +74,9 @@ export const respondToInvitation = async (request: FastifyRequest<{ Params: { id
   try {
     const { id } = request.params; // Invitation ID
     const { status } = request.body;
+    if (!status || !['accepted', 'rejected'].includes(status)) {
+      return reply.status(400).send({ error: 'Invalid status' });
+    }
     const userId = (request as any).user.id;
 
     const invitation = await workspaceRepository.findInvitationById(id);
