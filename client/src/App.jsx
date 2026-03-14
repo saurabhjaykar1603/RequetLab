@@ -39,6 +39,7 @@ export default function App() {
   const [workspaces, setWorkspaces] = useState([]);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState(() => localStorage.getItem('activeWorkspaceId') || '');
   const [workspaceMembers, setWorkspaceMembers] = useState([]);
+  const [pendingInvitations, setPendingInvitations] = useState([]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -73,7 +74,12 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (user) loadData();
+    if (user) {
+      if (activeWorkspaceId) {
+        loadData();
+      }
+      fetchInvitations();
+    }
   }, [user, activeWorkspaceId]);
 
   const handleLogout = () => {
@@ -169,6 +175,32 @@ export default function App() {
       
       showToast({ message: 'Member removed', type: 'success' });
       fetchMembers(workspaceId);
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
+  const fetchInvitations = async () => {
+    try {
+      if (!user) return;
+      const invitations = await api.getInvitations();
+      setPendingInvitations(invitations || []);
+    } catch (err) {
+      console.error('Failed to fetch invitations', err);
+    }
+  };
+
+  const handleRespondToInvitation = async (invitationId, status) => {
+    try {
+      const res = await api.respondToInvitation(invitationId, status);
+      if (res.error) throw new Error(res.error);
+      
+      showToast({ message: `Invitation ${status}`, type: 'success' });
+      fetchInvitations();
+      if (status === 'accepted') {
+        const updatedWorkspaces = await api.getWorkspaces();
+        setWorkspaces(updatedWorkspaces || []);
+      }
     } catch (err) {
       showToast({ message: err.message, type: 'error' });
     }
@@ -511,6 +543,9 @@ export default function App() {
             fetchMembers={fetchMembers}
             handleRemoveMember={handleRemoveMember}
             currentUser={user}
+            pendingInvitations={pendingInvitations}
+            handleRespondToInvitation={handleRespondToInvitation}
+            fetchInvitations={fetchInvitations}
           />
         </>
       ) : <Navigate to="/login" />} />

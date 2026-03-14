@@ -73,6 +73,20 @@ export const api = {
     });
     return res.json();
   },
+  getInvitations: async () => {
+    const res = await fetch(`${BASE_URL}/workspaces/invitations`, {
+      headers: getHeaders()
+    });
+    return res.json();
+  },
+  respondToInvitation: async (invitationId, status) => {
+    const res = await fetch(`${BASE_URL}/workspaces/invitations/${invitationId}/respond`, {
+      method: 'POST',
+      headers: getHeaders(),
+      body: JSON.stringify({ status })
+    });
+    return res.json();
+  },
 
   // Collections
   getCollections: async () => {

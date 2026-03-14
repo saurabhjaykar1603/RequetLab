@@ -1,5 +1,6 @@
 import { Play, Copy, Save, ChevronDown } from 'lucide-react';
 import KvTable from './KvTable';
+import CustomSelect from '../common/CustomSelect';
 
 const RequestEditor = ({ 
   activeRequest, 
@@ -35,16 +36,15 @@ const RequestEditor = ({
         <div className="request-title-bar">
           <h3>{activeRequest.name}</h3>
           <div style={{display: 'flex', gap: '8px'}}>
-            <select 
-              style={{padding: '4px 8px', borderRadius: '4px', border: '1px solid var(--border-color)', background: 'var(--bg-secondary)', color: 'var(--text-primary)', fontSize: '12px', outline: 'none'}}
+            <CustomSelect 
+              options={[
+                { value: '', label: 'No environment' },
+                ...environments.map(env => ({ value: env.id, label: env.name }))
+              ]}
               value={activeEnvId}
-              onChange={e => setActiveEnvId(e.target.value)}
-            >
-              <option value="">No environment</option>
-              {environments.map(env => (
-                <option key={env.id} value={env.id}>{env.name}</option>
-              ))}
-            </select>
+              onChange={setActiveEnvId}
+              className="env-select-custom"
+            />
             <button className="icon-btn" style={{border: '1px solid var(--border-color)', borderRadius: '4px', padding: '4px 8px'}} onClick={handleCopyAsCurl} title="Copy as cURL">
               <Copy size={14} /> cURL
             </button>
@@ -55,16 +55,24 @@ const RequestEditor = ({
         </div>
         <div className="request-url-bar">
           <div className="url-input-container">
-            <select 
-              className={`method-select method-${activeRequest.method}`}
+            <CustomSelect 
+              options={[
+                { value: 'GET', label: 'GET' },
+                { value: 'POST', label: 'POST' },
+                { value: 'PUT', label: 'PUT' },
+                { value: 'DELETE', label: 'DELETE' },
+                { value: 'PATCH', label: 'PATCH' }
+              ]}
               value={activeRequest.method}
-              onChange={(e) => handleChange('method', e.target.value)}
-            >
-              <option value="GET">GET</option>
-              <option value="POST">POST</option>
-              <option value="PUT">PUT</option>
-              <option value="DELETE">DELETE</option>
-            </select>
+              onChange={(val) => handleChange('method', val)}
+              className="method-select-custom"
+              renderOption={(opt) => (
+                <span className={`method-${opt.value}`}>{opt.label}</span>
+              )}
+              renderValue={(opt) => (
+                <span className={`method-${opt?.value}`} style={{fontWeight: 'bold'}}>{opt?.label || 'GET'}</span>
+              )}
+            />
             <input 
               className="url-input" 
               value={activeRequest.url}
@@ -100,15 +108,16 @@ const RequestEditor = ({
           <div style={{display:'flex', flexDirection:'column', gap:'12px'}}>
             <div style={{display:'flex', gap:'12px', alignItems:'center'}}>
               <label style={{color:'var(--text-secondary)', fontSize:'0.875rem'}}>Body Type:</label>
-              <select 
-                style={{background:'var(--bg-secondary)', color:'var(--text-primary)', border:'1px solid var(--border-color)', borderRadius:'4px', padding:'4px 8px'}}
+              <CustomSelect 
+                options={[
+                  { value: 'none', label: 'none' },
+                  { value: 'json', label: 'JSON' },
+                  { value: 'form-data', label: 'form-data' }
+                ]}
                 value={activeRequest.body?.type || 'none'}
-                onChange={(e) => handleChange('body', { ...activeRequest.body, type: e.target.value })}
-              >
-                <option value="none">none</option>
-                <option value="json">JSON</option>
-                <option value="form-data">form-data</option>
-              </select>
+                onChange={(val) => handleChange('body', { ...activeRequest.body, type: val })}
+                className="body-type-select-custom"
+              />
             </div>
             {activeRequest.body?.type === 'json' && (
               <textarea 

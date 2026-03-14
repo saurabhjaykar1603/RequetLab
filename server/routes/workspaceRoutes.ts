@@ -10,4 +10,8 @@ export default async function (fastify: FastifyInstance) {
   fastify.post('/:id/members', workspaceController.addMember);
   fastify.delete('/:id/members/:userId', workspaceController.removeMember);
   fastify.delete('/:id', workspaceController.deleteWorkspace);
+
+  // Invitations
+  fastify.get('/invitations', workspaceController.getUserInvitations);
+  fastify.post('/invitations/:id/respond', workspaceController.respondToInvitation);
 }

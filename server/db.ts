@@ -130,6 +130,19 @@ const initializeDb = async () => {
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
 
+    // Workspace Invitations Table
+    await client.query(`CREATE TABLE IF NOT EXISTS workspace_invitations (
+      id TEXT PRIMARY KEY,
+      "workspaceId" TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+      "inviterId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      "inviteeId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role TEXT DEFAULT 'member', -- 'admin' or 'member'
+      status TEXT DEFAULT 'pending', -- 'pending', 'accepted', 'rejected'
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE("workspaceId", "inviteeId", "status") -- Prevent duplicate pending invites
+    )`);
+
     await client.query('COMMIT');
     console.log('PostgreSQL database and tables initialized.');
   } catch (err: any) {

@@ -13,13 +13,13 @@ export const createWorkspace = async (name: string, ownerId: string, type: 'pers
   return res.rows[0];
 };
 
-export const getUserWorkspaces = async (userId: string): Promise<Workspace[]> => {
+export const getUserWorkspaces = async (userId: string): Promise<any[]> => {
   const sql = `
-    SELECT w.* FROM workspaces w
+    SELECT w.*, wm.role FROM workspaces w
     JOIN workspace_members wm ON w.id = wm."workspaceId"
     WHERE wm."userId" = $1
   `;
-  return await getQuery<Workspace>(sql, [userId]);
+  return await getQuery<any>(sql, [userId]);
 };
 
 export const findWorkspaceById = async (id: string): Promise<Workspace | undefined> => {
@@ -58,4 +58,38 @@ export const getMemberRole = async (workspaceId: string, userId: string): Promis
 export const removeMemberFromWorkspace = async (workspaceId: string, userId: string) => {
   const sql = 'DELETE FROM workspace_members WHERE "workspaceId" = $1 AND "userId" = $2';
   await runQuery(sql, [workspaceId, userId]);
+};
+
+// Invitations
+export const createInvitation = async (workspaceId: string, inviterId: string, inviteeId: string, role: string) => {
+  const id = uuidv4();
+  const sql = `
+    INSERT INTO workspace_invitations (id, "workspaceId", "inviterId", "inviteeId", role)
+    VALUES ($1, $2, $3, $4, $5)
+    ON CONFLICT ("workspaceId", "inviteeId", status) WHERE status = 'pending' DO UPDATE SET role = EXCLUDED.role
+    RETURNING *
+  `;
+  const res = await runQuery(sql, [id, workspaceId, inviterId, inviteeId, role]);
+  return res.rows[0];
+};
+
+export const getPendingInvitations = async (userId: string) => {
+  const sql = `
+    SELECT vi.*, w.name as "workspaceName", u.name as "inviterName" FROM workspace_invitations vi
+    JOIN workspaces w ON vi."workspaceId" = w.id
+    JOIN users u ON vi."inviterId" = u.id
+    WHERE vi."inviteeId" = $1 AND vi.status = 'pending'
+  `;
+  return await getQuery<any>(sql, [userId]);
+};
+
+export const updateInvitationStatus = async (invitationId: string, status: 'accepted' | 'rejected') => {
+  const sql = 'UPDATE workspace_invitations SET status = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
+  const res = await runQuery(sql, [status, invitationId]);
+  return res.rows[0];
+};
+
+export const findInvitationById = async (id: string) => {
+  const sql = 'SELECT * FROM workspace_invitations WHERE id = $1';
+  return await getSingleQuery<any>(sql, [id]);
 };

@@ -1,5 +1,6 @@
 import React from 'react';
-import { X, Box, Trash2, AlertTriangle, UserPlus, Users } from 'lucide-react';
+import { X, Box, Trash2, AlertTriangle, UserPlus, Users, Bell, Check } from 'lucide-react';
+import CustomSelect from '../common/CustomSelect';
 
 const Modals = ({
   modalOpen,
@@ -21,7 +22,10 @@ const Modals = ({
   folders,
   workspaces,
   activeWorkspaceId,
-  currentUser
+  currentUser,
+  pendingInvitations,
+  handleRespondToInvitation,
+  fetchInvitations
 }) => {
   if (!modalOpen) return null;
 
@@ -61,10 +65,12 @@ const Modals = ({
               <div className="modal-body">
                 <div className="form-group">
                   <label>Collection</label>
-                  <select required value={modalData.collectionId || ''} onChange={e => setModalData({...modalData, collectionId: e.target.value})}>
-                    <option value="">Select Collection</option>
-                    {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  <CustomSelect 
+                    options={collections.map(c => ({ value: c.id, label: c.name }))}
+                    value={modalData.collectionId}
+                    onChange={val => setModalData({...modalData, collectionId: val})}
+                    placeholder="Select Collection"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Name</label>
@@ -91,28 +97,36 @@ const Modals = ({
               <div className="modal-body">
                 <div className="form-group">
                   <label>Collection</label>
-                  <select required value={modalData.collectionId || ''} onChange={e => setModalData({...modalData, collectionId: e.target.value})}>
-                    <option value="">Select Collection</option>
-                    {collections.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
+                  <CustomSelect 
+                    options={collections.map(c => ({ value: c.id, label: c.name }))}
+                    value={modalData.collectionId}
+                    onChange={val => setModalData({...modalData, collectionId: val})}
+                    placeholder="Select Collection"
+                  />
                 </div>
                 <div className="form-group">
                   <label>Folder (Optional)</label>
-                  <select value={modalData.folderId || ''} onChange={e => setModalData({...modalData, folderId: e.target.value})}>
-                    <option value="">Root</option>
-                    {folders.filter(f => f.collectionId === modalData.collectionId).map(f => (
-                      <option key={f.id} value={f.id}>{f.name}</option>
-                    ))}
-                  </select>
+                  <CustomSelect 
+                    options={[
+                      { value: '', label: 'Root' },
+                      ...folders.filter(f => f.collectionId === modalData.collectionId).map(f => ({ value: f.id, label: f.name }))
+                    ]}
+                    value={modalData.folderId || ''}
+                    onChange={val => setModalData({...modalData, folderId: val})}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Method</label>
-                  <select value={modalData.method || 'GET'} onChange={e => setModalData({...modalData, method: e.target.value})}>
-                    <option value="GET">GET</option>
-                    <option value="POST">POST</option>
-                    <option value="PUT">PUT</option>
-                    <option value="DELETE">DELETE</option>
-                  </select>
+                  <CustomSelect 
+                    options={[
+                      { value: 'GET', label: 'GET' },
+                      { value: 'POST', label: 'POST' },
+                      { value: 'PUT', label: 'PUT' },
+                      { value: 'DELETE', label: 'DELETE' }
+                    ]}
+                    value={modalData.method || 'GET'}
+                    onChange={val => setModalData({...modalData, method: val})}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Name</label>
@@ -164,16 +178,16 @@ const Modals = ({
                   <label>Workspace Name</label>
                   <input autoFocus required value={modalData.workspaceName || ''} onChange={e => setModalData({...modalData, workspaceName: e.target.value})} placeholder="e.g. Project Alpha" />
                 </div>
-                <div className="form-group">
+                 <div className="form-group">
                   <label>Type</label>
-                  <select 
-                    style={{padding: '10px 12px', background: 'var(--bg-primary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px'}}
-                    value={modalData.workspaceType || 'personal'} 
-                    onChange={e => setModalData({...modalData, workspaceType: e.target.value})}
-                  >
-                    <option value="personal">Personal</option>
-                    <option value="team">Team</option>
-                  </select>
+                  <CustomSelect 
+                    options={[
+                      { value: 'personal', label: 'Personal' },
+                      { value: 'team', label: 'Team' }
+                    ]}
+                    value={modalData.workspaceType || 'personal'}
+                    onChange={val => setModalData({...modalData, workspaceType: val})}
+                  />
                 </div>
               </div>
               <div className="modal-footer">
@@ -188,8 +202,20 @@ const Modals = ({
       {modalOpen === 'workspace-switch' && (
         <div className="modal-overlay" onClick={() => setModalOpen(null)}>
           <div className="modal" onClick={e => e.stopPropagation()}>
-            <div className="modal-header">
-              <h3>Switch Workspace</h3>
+             <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h3 style={{ margin: 0 }}>Switch Workspace</h3>
+                {pendingInvitations.length > 0 && (
+                  <button 
+                    className="icon-btn" 
+                    onClick={() => setModalOpen('invitations')}
+                    style={{ background: 'rgba(239, 104, 25, 0.1)', color: 'var(--accent-color)', padding: '4px 8px', borderRadius: '12px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                  >
+                    <Bell size={12} />
+                    {pendingInvitations.length} Pending
+                  </button>
+                )}
+              </div>
               <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
             </div>
             <div className="modal-body" style={{padding: '8px'}}>
@@ -209,7 +235,7 @@ const Modals = ({
                       <div style={{fontSize: '11px', color: 'var(--text-secondary)'}}>{w.type}</div>
                     </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '4px' }}>
+                   <div style={{ display: 'flex', gap: '4px' }}>
                     {w.type === 'team' && (
                       <>
                         <button 
@@ -239,18 +265,20 @@ const Modals = ({
                         </button>
                       </>
                     )}
-                    <button 
-                      className="icon-btn delete-hover" 
-                      onClick={(e) => { 
-                        e.stopPropagation(); 
-                        setModalData({ ...modalData, workspaceToDelete: w });
-                        setModalOpen('workspace-delete-confirm');
-                      }}
-                      title="Delete Workspace"
-                      style={{ padding: '6px', color: 'var(--text-secondary)' }}
-                    >
-                      <Trash2 size={14} />
-                    </button>
+                    {w.role === 'admin' && (
+                      <button 
+                        className="icon-btn delete-hover" 
+                        onClick={(e) => { 
+                          e.stopPropagation(); 
+                          setModalData({ ...modalData, workspaceToDelete: w });
+                          setModalOpen('workspace-delete-confirm');
+                        }}
+                        title="Delete Workspace"
+                        style={{ padding: '6px', color: 'var(--text-secondary)' }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    )}
                   </div>
                 </div>
               ))}
@@ -358,15 +386,16 @@ const Modals = ({
                     onChange={e => setModalData({ ...modalData, email: e.target.value })} 
                   />
                 </div>
-                <div className="form-group" style={{ marginTop: '16px' }}>
+                 <div className="form-group" style={{ marginTop: '16px' }}>
                   <label>Role</label>
-                  <select 
-                    value={modalData.role || 'member'} 
-                    onChange={e => setModalData({ ...modalData, role: e.target.value })}
-                  >
-                    <option value="member">Member</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  <CustomSelect 
+                    options={[
+                      { value: 'member', label: 'Member' },
+                      { value: 'admin', label: 'Admin' }
+                    ]}
+                    value={modalData.role || 'member'}
+                    onChange={val => setModalData({...modalData, role: val})}
+                  />
                 </div>
               </div>
               <div className="modal-footer">
@@ -378,6 +407,70 @@ const Modals = ({
         </div>
       )}
 
+      {modalOpen === 'invitations' && (
+        <div className="modal-overlay" onClick={() => setModalOpen('workspace-switch')}>
+          <div className="modal" style={{ maxWidth: '450px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Pending Invitations ({pendingInvitations.length})</h3>
+              <button className="icon-btn" onClick={() => setModalOpen('workspace-switch')}><X size={18}/></button>
+            </div>
+            <div className="modal-body" style={{ padding: '0' }}>
+              <div className="invitations-list">
+                {pendingInvitations.map(invite => (
+                  <div key={invite.id} className="invitation-item" style={{ 
+                    padding: '16px 20px', 
+                    borderBottom: '1px solid var(--border-color)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '12px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div className="avatar" style={{
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'var(--accent-color)',
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '12px',
+                        fontWeight: 'bold'
+                      }}>
+                        {invite.inviterName.charAt(0).toUpperCase()}
+                      </div>
+                      <div style={{ fontSize: '14px', lineHeight: 1.4 }}>
+                        <strong>{invite.inviterName}</strong> invited you to join <strong>{invite.workspaceName}</strong> as a <strong>{invite.role}</strong>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+                      <button 
+                        className="btn-secondary" 
+                        style={{ padding: '6px 12px', fontSize: '13px' }}
+                        onClick={() => handleRespondToInvitation(invite.id, 'rejected')}
+                      >
+                        Decline
+                      </button>
+                      <button 
+                        className="btn-primary" 
+                        style={{ padding: '6px 16px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                        onClick={() => handleRespondToInvitation(invite.id, 'accepted')}
+                      >
+                        <Check size={14} /> Accept
+                      </button>
+                    </div>
+                  </div>
+                ))}
+                {pendingInvitations.length === 0 && (
+                  <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    No pending invitations
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {modalOpen === 'workspace-delete-confirm' && (
         <div className="modal-overlay" onClick={() => setModalOpen('workspace-switch')}>
           <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
