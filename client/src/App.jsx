@@ -315,13 +315,46 @@ export default function App() {
               } else if (item.request) {
                 // it's a request
                 const reqData = item.request;
+                
+                let parsedUrl = '';
+                let parsedParams = [];
+                
+                // Parse URL & URL params
+                if (typeof reqData.url === 'string') {
+                  parsedUrl = reqData.url;
+                } else if (typeof reqData.url === 'object' && reqData.url !== null) {
+                  parsedUrl = reqData.url.raw || '';
+                  if (Array.isArray(reqData.url.query)) {
+                    parsedParams = reqData.url.query.map(q => ({ key: q.key || '', value: q.value || '', description: q.description || '' }));
+                  }
+                }
+                
+                // Parse Headers
+                let parsedHeaders = [];
+                if (Array.isArray(reqData.header)) {
+                  parsedHeaders = reqData.header.map(h => ({ key: h.key || '', value: h.value || '', description: h.description || '' }));
+                }
+                
+                // Parse Body
+                let parsedBody = null;
+                if (reqData.body && reqData.body.mode) {
+                  if (reqData.body.mode === 'raw') {
+                    parsedBody = { type: 'json', content: reqData.body.raw };
+                  } else if (reqData.body.mode === 'urlencoeded') {
+                     // simplified fallback
+                    parsedBody = { type: 'none', content: '' };
+                  }
+                }
+
                 await api.createRequest({
                   name: item.name,
-                  method: reqData.method,
-                  url: typeof reqData.url === 'string' ? reqData.url : reqData.url?.raw || '',
+                  method: reqData.method || 'GET',
+                  url: parsedUrl,
                   collectionId: newCol.id,
                   folderId: currentFolderId,
-                  headers: reqData.header?.map(h => ({ key: h.key, value: h.value })) || []
+                  headers: parsedHeaders,
+                  params: parsedParams,
+                  body: parsedBody
                 });
               }
             }

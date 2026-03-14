@@ -2,13 +2,37 @@ import express from 'express';
 import cors from 'cors';
 import { v4 as uuidv4 } from 'uuid';
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
 import { runQuery, getQuery, getSingleQuery } from './db.js';
+import logger from './logger.js';
 
 dotenv.config();
+
+// Watch .env file for changes
+const envPath = path.resolve(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  fs.watchFile(envPath, { interval: 1000 }, (curr, prev) => {
+    if (curr.mtime !== prev.mtime) {
+      const result = dotenv.config({ override: true });
+      if (result.error) {
+        logger.error(`Error reloading .env file: ${result.error.message}`);
+      } else {
+        logger.info('Reloaded .env file due to changes');
+      }
+    }
+  });
+}
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Request logging middleware
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.url}`);
+  next();
+});
 
 // --- COLLECTIONS ---
 
@@ -251,12 +275,20 @@ app.post('/api/proxy', async (req, res) => {
     const { url, method, headers, params, body } = req.body;
     const startTime = Date.now();
     
+    // Helper to replace {{VAR}} with process.env.VAR
+    const replaceEnvVars = (str) => {
+      if (!str || typeof str !== 'string') return str;
+      return str.replace(/\{\{([^}]+)\}\}/g, (match, p1) => {
+        return process.env[p1] !== undefined ? process.env[p1] : match;
+      });
+    };
+
     // Construct final URL with params
-    let finalUrl = url;
+    let finalUrl = replaceEnvVars(url);
     if (params && Array.isArray(params)) {
-      const urlObj = new URL(url.startsWith('http') ? url : `http://${url}`);
+      const urlObj = new URL(finalUrl.startsWith('http') ? finalUrl : `http://${finalUrl}`);
       params.forEach(p => {
-        if (p.key && p.value) urlObj.searchParams.append(p.key, p.value);
+        if (p.key && p.value) urlObj.searchParams.append(p.key, replaceEnvVars(p.value));
       });
       finalUrl = urlObj.toString();
     }
@@ -264,7 +296,7 @@ app.post('/api/proxy', async (req, res) => {
     const fetchHeaders = new Headers();
     if (headers && Array.isArray(headers)) {
       headers.forEach(h => { 
-        if (h.key && h.value) fetchHeaders.append(h.key, h.value);
+        if (h.key && h.value) fetchHeaders.append(h.key, replaceEnvVars(h.value));
       });
     }
 
@@ -275,7 +307,7 @@ app.post('/api/proxy', async (req, res) => {
 
     if (method !== 'GET' && method !== 'HEAD' && body) {
       if (body.type === 'json' && body.content) {
-        options.body = body.content;
+        options.body = replaceEnvVars(body.content);
         if (!fetchHeaders.has('Content-Type')) {
           fetchHeaders.append('Content-Type', 'application/json');
         }
@@ -319,5 +351,5 @@ app.post('/api/proxy', async (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });

@@ -15,6 +15,9 @@ const db = new sqlite3.Database(dbPath, (err) => {
   } else {
     console.log('Connected to the SQLite database.');
     db.serialize(() => {
+      // Enable foreign key constraints
+      db.run('PRAGMA foreign_keys = ON;');
+
       // Collections Table
       db.run(`CREATE TABLE IF NOT EXISTS collections (
         id TEXT PRIMARY KEY,
@@ -62,6 +65,10 @@ const db = new sqlite3.Database(dbPath, (err) => {
         createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
         updatedAt DATETIME DEFAULT CURRENT_TIMESTAMP
       )`);
+
+      // Cleanup Orphaned Rows (Backwards Compatibility Fix)
+      db.run(`DELETE FROM folders WHERE collectionId NOT IN (SELECT id FROM collections)`);
+      db.run(`DELETE FROM requests WHERE collectionId NOT IN (SELECT id FROM collections)`);
     });
   }
 });
