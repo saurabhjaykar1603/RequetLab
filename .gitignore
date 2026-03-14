@@ -1,0 +1,9 @@
+# Global
+.DS_Store
+.env
+node_modules/
+*.log
+
+# Workspace
+.vscode/
+.idea/
