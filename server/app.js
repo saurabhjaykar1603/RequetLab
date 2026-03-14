@@ -1,10 +1,13 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import dotenv from 'dotenv';
-import fs from 'fs';
-import path from 'path';
 import logger from './logger.js';
 
+// Plugins
+import envWatcher from './plugins/env-watcher.js';
+import requestLogger from './plugins/request-logger.js';
+
+// Routes
 import collectionRoutes from './routes/collectionRoutes.js';
 import folderRoutes from './routes/folderRoutes.js';
 import requestRoutes from './routes/requestRoutes.js';
@@ -13,37 +16,20 @@ import proxyRoutes from './routes/proxyRoutes.js';
 
 dotenv.config();
 
-// Watch .env file for changes
-const envPath = path.resolve(process.cwd(), '.env');
-if (fs.existsSync(envPath)) {
-  fs.watchFile(envPath, { interval: 1000 }, (curr, prev) => {
-    if (curr.mtime !== prev.mtime) {
-      const result = dotenv.config({ override: true });
-      if (result.error) {
-        logger.error(`Error reloading .env file: ${result.error.message}`);
-      } else {
-        logger.info('Reloaded .env file due to changes');
-      }
-    }
-  });
-}
-
 // Initialize Fastify
 const fastify = Fastify({
-  logger: false // we will plug our own custom logger instead
+  logger: false 
 });
 
-// Register Plugins
+// Register Core Plugins
 fastify.register(cors, {
-  origin: true, // Allow all origins (for dev)
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], // Explicitly allow DELETE
+  origin: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
 });
 
-// Request Logging Hook (mimicking standard logger behavior)
-fastify.addHook('onRequest', (request, reply, done) => {
-  logger.info(`${request.method} ${request.url}`);
-  done();
-});
+// Register Custom Plugins
+fastify.register(envWatcher);
+fastify.register(requestLogger);
 
 // Register Routes
 fastify.register(collectionRoutes, { prefix: '/api/collections' });

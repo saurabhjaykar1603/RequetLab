@@ -1,4 +1,4 @@
-import * as folderRepository from '../repositories/folderRepository.js';
+import * as folderRepository from '../models/folderRepository.js';
 
 export const getFolders = async (request, reply) => {
   try {

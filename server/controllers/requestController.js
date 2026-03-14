@@ -1,4 +1,4 @@
-import * as requestRepository from '../repositories/requestRepository.js';
+import * as requestRepository from '../models/requestRepository.js';
 
 export const getRequests = async (request, reply) => {
   try {

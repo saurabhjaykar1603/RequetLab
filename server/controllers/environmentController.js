@@ -1,4 +1,4 @@
-import * as environmentRepository from '../repositories/environmentRepository.js';
+import * as environmentRepository from '../models/environmentRepository.js';
 
 export const getEnvironments = async (request, reply) => {
   try {

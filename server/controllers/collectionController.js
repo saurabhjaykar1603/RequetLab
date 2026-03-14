@@ -1,4 +1,4 @@
-import * as collectionRepository from '../repositories/collectionRepository.js';
+import * as collectionRepository from '../models/collectionRepository.js';
 
 export const getCollections = async (request, reply) => {
   try {
