@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { api } from '../../api';
 import { 
   History, User, Tag, 
   Calendar, ChevronLeft, ChevronRight, 
   Filter, RotateCcw, Search
 } from 'lucide-react';
+import CustomSelect from '../common/CustomSelect';
+import { useState ,useEffect} from 'react';
+import { api } from '../../api';
 
 const ActivityLogs = ({ activeWorkspaceId }) => {
   const [logs, setLogs] = useState([]);
@@ -18,6 +19,30 @@ const ActivityLogs = ({ activeWorkspaceId }) => {
     entityType: '',
     userId: ''
   });
+  const [members, setMembers] = useState([]);
+
+  const actionOptions = [
+    { value: '', label: 'All Actions' },
+    { value: 'CREATE', label: 'Create' },
+    { value: 'UPDATE', label: 'Update' },
+    { value: 'DELETE', label: 'Delete' },
+    { value: 'INVITE', label: 'Invite' },
+    { value: 'ACCEPT', label: 'Accept' },
+    { value: 'REJECT', label: 'Reject' },
+    { value: 'LOGIN', label: 'Login' },
+    { value: 'SIGNUP', label: 'Signup' },
+    { value: 'SIGNOUT', label: 'Signout' },
+  ];
+
+  const entityOptions = [
+    { value: '', label: 'All Types' },
+    { value: 'COLLECTION', label: 'Collection' },
+    { value: 'FOLDER', label: 'Folder' },
+    { value: 'REQUEST', label: 'Request' },
+    { value: 'ENVIRONMENT', label: 'Environment' },
+    { value: 'INVITATION', label: 'Invitation' },
+    { value: 'USER', label: 'User' },
+  ];
 
   const fetchLogs = async () => {
     setLoading(true);
@@ -38,9 +63,19 @@ const ActivityLogs = ({ activeWorkspaceId }) => {
     }
   };
 
+  const fetchMembers = async () => {
+    try {
+      const data = await api.getWorkspaceMembers(activeWorkspaceId);
+      setMembers(data || []);
+    } catch (error) {
+      console.error('Error fetching workspace members:', error);
+    }
+  };
+
   useEffect(() => {
     if (activeWorkspaceId) {
       fetchLogs();
+      fetchMembers();
     }
   }, [activeWorkspaceId, page, filters]);
 
@@ -104,53 +139,51 @@ const ActivityLogs = ({ activeWorkspaceId }) => {
         display: 'flex', 
         gap: '12px', 
         marginBottom: '20px', 
-        padding: '16px', 
+        padding: '12px 16px', 
         backgroundColor: 'var(--bg-secondary)', 
         borderRadius: '8px',
         border: '1px solid var(--border-color)',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        alignItems: 'center'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '180px' }}>
           <Filter size={14} color="var(--text-secondary)" />
-          <select 
-            className="custom-select" 
-            value={filters.action} 
-            onChange={(e) => handleFilterChange('action', e.target.value)}
-            style={{ flex: 1 }}
-          >
-            <option value="">All Actions</option>
-            <option value="CREATE">Create</option>
-            <option value="UPDATE">Update</option>
-            <option value="DELETE">Delete</option>
-            <option value="INVITE">Invite</option>
-            <option value="ACCEPT">Accept</option>
-            <option value="REJECT">Reject</option>
-            <option value="LOGIN">Login</option>
-            <option value="SIGNUP">Signup</option>
-            <option value="SIGNOUT">Signout</option>
-          </select>
+          <CustomSelect 
+            options={actionOptions}
+            value={filters.action}
+            onChange={(val) => handleFilterChange('action', val)}
+            placeholder="All Actions"
+            className="filter-select"
+          />
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '180px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '180px' }}>
           <Tag size={14} color="var(--text-secondary)" />
-          <select 
-            className="custom-select" 
-            value={filters.entityType} 
-            onChange={(e) => handleFilterChange('entityType', e.target.value)}
-            style={{ flex: 1 }}
-          >
-            <option value="">All Types</option>
-            <option value="COLLECTION">Collection</option>
-            <option value="FOLDER">Folder</option>
-            <option value="REQUEST">Request</option>
-            <option value="ENVIRONMENT">Environment</option>
-            <option value="INVITATION">Invitation</option>
-            <option value="USER">User</option>
-          </select>
+          <CustomSelect 
+            options={entityOptions}
+            value={filters.entityType}
+            onChange={(val) => handleFilterChange('entityType', val)}
+            placeholder="All Types"
+            className="filter-select"
+          />
         </div>
 
-        <button className="btn-secondary" onClick={resetFilters} style={{ marginLeft: 'auto' }}>
-          Clear Filters
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', width: '220px' }}>
+          <User size={14} color="var(--text-secondary)" />
+          <CustomSelect 
+            options={[
+              { value: '', label: 'All Users' },
+              ...members.map(m => ({ value: m.id, label: m.name }))
+            ]}
+            value={filters.userId}
+            onChange={(val) => handleFilterChange('userId', val)}
+            placeholder="All Users"
+            className="filter-select"
+          />
+        </div>
+
+        <button className="btn-secondary" onClick={resetFilters} style={{ marginLeft: 'auto', height: '32px' }}>
+          <RotateCcw size={14} /> Reset
         </button>
       </div>
 
