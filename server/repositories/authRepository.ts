@@ -1,12 +1,17 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getSingleQuery, runQuery } from '../db.ts';
 import { User } from '../interfaces/user/User.ts';
+import { logActivity } from './activityRepository';
 
 export const createUser = async (name: string, email: string, passwordHash: string): Promise<User> => {
   const id = uuidv4();
   const sql = 'INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING id, name, email';
   const res = await runQuery(sql, [id, name, email, passwordHash]);
-  return res.rows[0];
+  const user = res.rows[0];
+  if (user) {
+    await logActivity(user.id, undefined, 'SIGNUP', 'USER', user.id, user.name, `New user registered: ${user.email}`);
+  }
+  return user;
 };
 
 export const findUserByEmail = async (email: string): Promise<User | undefined> => {

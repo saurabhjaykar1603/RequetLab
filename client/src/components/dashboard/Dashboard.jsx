@@ -4,6 +4,7 @@ import {
   Search, Box, History, Link as LucideLink, Sun, Moon
 } from 'lucide-react';
 import RequestEditor from './RequestEditor';
+import ActivityLogs from './ActivityLogs';
 
 const Dashboard = ({
   user,
@@ -59,9 +60,9 @@ const Dashboard = ({
           <Server size={20} />
           <span>Environments</span>
         </div>
-        <div className="nav-item">
+        <div className={`nav-item ${activeTab === 'activity' ? 'active' : ''}`} onClick={() => setActiveTab('activity')}>
           <History size={20} />
-          <span>History</span>
+          <span>Activity</span>
         </div>
       </div>
       <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center'}}>
@@ -224,22 +225,26 @@ const Dashboard = ({
 
     {/* MAIN PANEL */}
     <div className="main-panel">
-      <RequestEditor 
-        activeRequest={activeRequest}
-        setActiveRequest={setActiveRequest}
-        environments={environments}
-        activeEnvId={activeEnvId}
-        setActiveEnvId={setActiveEnvId}
-        globals={globals}
-        handleSaveRequest={handleSaveRequest}
-        handleCopyAsCurl={handleCopyAsCurl}
-        handleUrlPaste={handleUrlPaste}
-        handleSendRequest={handleSendRequest}
-        isSending={isSending}
-        response={response}
-        editorTab={editorTab}
-        setEditorTab={setEditorTab}
-      />
+      {activeTab === 'activity' ? (
+        <ActivityLogs activeWorkspaceId={activeWorkspaceId} />
+      ) : (
+        <RequestEditor 
+          activeRequest={activeRequest}
+          setActiveRequest={setActiveRequest}
+          environments={environments}
+          activeEnvId={activeEnvId}
+          setActiveEnvId={setActiveEnvId}
+          globals={globals}
+          handleSaveRequest={handleSaveRequest}
+          handleCopyAsCurl={handleCopyAsCurl}
+          handleUrlPaste={handleUrlPaste}
+          handleSendRequest={handleSendRequest}
+          isSending={isSending}
+          response={response}
+          editorTab={editorTab}
+          setEditorTab={setEditorTab}
+        />
+      )}
     </div>
   </div>
 );

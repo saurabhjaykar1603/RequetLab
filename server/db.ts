@@ -154,6 +154,19 @@ const initializeDb = async () => {
       UNIQUE("workspaceId", "inviteeId", "status") -- Prevent duplicate pending invites
     )`);
 
+    // Activity Logs Table
+    await client.query(`CREATE TABLE IF NOT EXISTS activity_logs (
+      id TEXT PRIMARY KEY,
+      "workspaceId" TEXT REFERENCES workspaces(id) ON DELETE CASCADE,
+      "userId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      action TEXT NOT NULL, -- 'CREATE', 'UPDATE', 'DELETE', 'INVITE', 'ACCEPT', 'REJECT'
+      "entityType" TEXT NOT NULL, -- 'COLLECTION', 'FOLDER', 'REQUEST', 'ENVIRONMENT', 'INVITATION'
+      "entityId" TEXT,
+      "entityName" TEXT,
+      details TEXT,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
     await client.query('COMMIT');
     console.log('PostgreSQL database and tables initialized.');
   } catch (err: any) {

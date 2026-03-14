@@ -31,6 +31,13 @@ export const api = {
     });
     return res.json();
   },
+  logout: async () => {
+    const res = await fetch(`${BASE_URL}/auth/logout`, {
+      method: 'POST',
+      headers: getHeaders()
+    });
+    return res.json();
+  },
 
   // Workspaces
   getWorkspaces: async () => {
@@ -225,6 +232,19 @@ export const api = {
       method: 'POST',
       headers: getPostHeaders(),
       body: JSON.stringify(tree)
+    });
+    return res.json();
+  },
+  getActivityLogs: async (filters = {}) => {
+    const params = new URLSearchParams();
+    if (filters.limit) params.append('limit', filters.limit);
+    if (filters.offset) params.append('offset', filters.offset);
+    if (filters.userId) params.append('userId', filters.userId);
+    if (filters.action) params.append('action', filters.action);
+    if (filters.entityType) params.append('entityType', filters.entityType);
+
+    const res = await fetch(`${BASE_URL}/activity?${params.toString()}`, {
+      headers: getHeaders()
     });
     return res.json();
   }

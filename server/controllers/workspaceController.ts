@@ -121,7 +121,7 @@ export const removeMember = async (request: FastifyRequest<{ Params: { id: strin
     }
 
     // 3. Remove member
-    await workspaceRepository.removeMemberFromWorkspace(id, userId);
+    await workspaceRepository.removeMemberFromWorkspace(id, userId, requesterId);
     return { success: true };
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });
@@ -139,7 +139,7 @@ export const deleteWorkspace = async (request: FastifyRequest<{ Params: { id: st
       return reply.status(403).send({ error: 'Only admins can delete workspaces' });
     }
 
-    await workspaceRepository.deleteWorkspace(id);
+    await workspaceRepository.deleteWorkspace(id, requesterId);
     return reply.status(200).send({ success: true });
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });

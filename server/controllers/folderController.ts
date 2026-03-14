@@ -20,7 +20,8 @@ export const getFolders = async (request: FastifyRequest<{ Querystring: { collec
 export const createFolder = async (request: FastifyRequest<{ Body: { name: string; collectionId: string } }>, reply: FastifyReply) => {
   try {
     const { name, collectionId } = request.body;
-    const newFolder = await folderRepository.createFolder(name, collectionId);
+    const userId = (request as any).user?.id || '';
+    const newFolder = await folderRepository.createFolder(name, collectionId, userId);
     reply.status(201).send(newFolder);
   } catch (error: any) {
     reply.status(500).send({ error: error.message });
@@ -31,7 +32,8 @@ export const updateFolder = async (request: FastifyRequest<{ Params: { id: strin
   try {
     const { id } = request.params;
     const { name } = request.body;
-    const updatedFolder = await folderRepository.updateFolder(id, name);
+    const userId = (request as any).user?.id || '';
+    const updatedFolder = await folderRepository.updateFolder(id, name, userId);
     return updatedFolder;
   } catch (error: any) {
     reply.status(500).send({ error: error.message });
@@ -41,7 +43,8 @@ export const updateFolder = async (request: FastifyRequest<{ Params: { id: strin
 export const deleteFolder = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   try {
     const { id } = request.params;
-    await folderRepository.deleteFolder(id);
+    const userId = (request as any).user?.id || '';
+    await folderRepository.deleteFolder(id, userId);
     return { success: true, id };
   } catch (error: any) {
     reply.status(500).send({ error: error.message });

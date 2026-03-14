@@ -34,7 +34,7 @@ export const createEnvironment = async (request: FastifyRequest<{ Body: { name: 
     const role = await workspaceRepository.getMemberRole(workspaceId, userId);
     if (!role) return reply.status(403).send({ error: 'You do not have access to this workspace' });
 
-    const newEnv = await environmentRepository.createEnvironment(name, variables, workspaceId);
+    const newEnv = await environmentRepository.createEnvironment(name, variables, workspaceId, userId);
     if (newEnv) {
       newEnv.variables = JSON.parse(newEnv.variables);
     }
@@ -55,7 +55,7 @@ export const updateEnvironment = async (request: FastifyRequest<{ Params: { id: 
     const role = await workspaceRepository.getMemberRole(targetEnv.workspaceId, userId);
     if (!role) return reply.status(403).send({ error: 'You do not have access to this environment' });
 
-    const updatedEnv = await environmentRepository.updateEnvironment(id, name, variables);
+    const updatedEnv = await environmentRepository.updateEnvironment(id, name, variables, userId);
     if (updatedEnv) {
       updatedEnv.variables = JSON.parse(updatedEnv.variables);
     }
@@ -76,7 +76,7 @@ export const deleteEnvironment = async (request: FastifyRequest<{ Params: { id: 
     const role = await workspaceRepository.getMemberRole(targetEnv.workspaceId, userId);
     if (!role) return reply.status(403).send({ error: 'You do not have access to delete this environment' });
 
-    await environmentRepository.deleteEnvironment(id);
+    await environmentRepository.deleteEnvironment(id, userId);
     return { success: true, id };
   } catch (error: any) {
     reply.status(500).send({ error: error.message });

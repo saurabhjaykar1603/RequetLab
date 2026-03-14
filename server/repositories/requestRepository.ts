@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { RequestEntity } from '../interfaces/request/Request.ts';
+import { logActivity } from './activityRepository';
+import { Collection } from '../interfaces/collection/Collection.ts';
 
 export const getAllRequests = async (workspaceId?: string): Promise<RequestEntity[]> => {
   if (workspaceId) {
@@ -36,7 +38,7 @@ export const getRequestById = async (id: string): Promise<RequestEntity | undefi
   return await getSingleQuery<RequestEntity>('SELECT * FROM requests WHERE id = $1', [id]);
 };
 
-export const createRequest = async (requestData: Partial<RequestEntity> & { collectionId: string }): Promise<RequestEntity | undefined> => {
+export const createRequest = async (requestData: Partial<RequestEntity> & { collectionId: string }, userId: string): Promise<RequestEntity | undefined> => {
   const { name, method, url, headers, body, params, auth, preRequestScript, testScript, folderId, collectionId } = requestData;
   const id = uuidv4();
   
@@ -51,10 +53,18 @@ export const createRequest = async (requestData: Partial<RequestEntity> & { coll
     [id, name, method || 'GET', url || '', headersStr, bodyStr, paramsStr, authStr, preRequestScript || '', testScript || '', folderId || null, collectionId]
   );
   
-  return await getRequestById(id);
+  const request = await getRequestById(id);
+  const collection = await getSingleQuery<Collection>('SELECT * FROM collections WHERE id = $1', [collectionId]);
+  
+  if (request && collection && collection.workspaceId) {
+    await logActivity(userId, collection.workspaceId, 'CREATE', 'REQUEST', id, name);
+  }
+  
+  return request;
 };
 
-export const updateRequest = async (id: string, updateData: Partial<RequestEntity>): Promise<RequestEntity | undefined> => {
+export const updateRequest = async (id: string, updateData: Partial<RequestEntity>, userId: string): Promise<RequestEntity | undefined> => {
+  const existing = await getRequestById(id);
   const { name, method, url, headers, body, params, auth, preRequestScript, testScript, folderId, collectionId } = updateData;
   
   const updates: string[] = [];
@@ -79,9 +89,24 @@ export const updateRequest = async (id: string, updateData: Partial<RequestEntit
     await runQuery(`UPDATE requests SET ${updates.join(', ')} WHERE id = $${paramIdx}`, values);
   }
   
-  return await getRequestById(id);
+  const updated = await getRequestById(id);
+  if (updated) {
+    const collection = await getSingleQuery<Collection>('SELECT * FROM collections WHERE id = $1', [updated.collectionId]);
+    if (collection && collection.workspaceId) {
+      await logActivity(userId, collection.workspaceId, 'UPDATE', 'REQUEST', id, updated.name, `Updated request configuration`);
+    }
+  }
+  
+  return updated;
 };
 
-export const deleteRequest = async (id: string): Promise<void> => {
+export const deleteRequest = async (id: string, userId: string): Promise<void> => {
+  const existing = await getRequestById(id);
+  if (existing) {
+    const collection = await getSingleQuery<Collection>('SELECT * FROM collections WHERE id = $1', [existing.collectionId]);
+    if (collection && collection.workspaceId) {
+      await logActivity(userId, collection.workspaceId, 'DELETE', 'REQUEST', id, existing.name);
+    }
+  }
   await runQuery('DELETE FROM requests WHERE id = $1', [id]);
 };

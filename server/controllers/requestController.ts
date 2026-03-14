@@ -32,7 +32,8 @@ export const getRequests = async (request: FastifyRequest<{ Querystring: { colle
 
 export const createRequest = async (request: FastifyRequest<{ Body: Partial<RequestEntity> & { collectionId: string } }>, reply: FastifyReply) => {
   try {
-    const newRequest = await requestRepository.createRequest(request.body);
+    const userId = (request as any).user?.id || '';
+    const newRequest = await requestRepository.createRequest(request.body, userId);
     
     if (newRequest) {
       newRequest.headers = newRequest.headers ? JSON.parse(newRequest.headers) : [];
@@ -50,7 +51,8 @@ export const createRequest = async (request: FastifyRequest<{ Body: Partial<Requ
 export const updateRequest = async (request: FastifyRequest<{ Params: { id: string }; Body: Partial<RequestEntity> }>, reply: FastifyReply) => {
   try {
     const { id } = request.params;
-    const updatedRequest = await requestRepository.updateRequest(id, request.body);
+    const userId = (request as any).user?.id || '';
+    const updatedRequest = await requestRepository.updateRequest(id, request.body, userId);
     
     if (updatedRequest) {
       updatedRequest.headers = updatedRequest.headers ? JSON.parse(updatedRequest.headers) : [];
@@ -68,7 +70,8 @@ export const updateRequest = async (request: FastifyRequest<{ Params: { id: stri
 export const deleteRequest = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   try {
     const { id } = request.params;
-    await requestRepository.deleteRequest(id);
+    const userId = (request as any).user?.id || '';
+    await requestRepository.deleteRequest(id, userId);
     return { success: true, id };
   } catch (error: any) {
     reply.status(500).send({ error: error.message });

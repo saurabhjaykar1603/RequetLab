@@ -2,6 +2,7 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import * as authRepository from '../repositories/authRepository.ts';
+import { logActivity } from '../repositories/activityRepository.ts';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 
@@ -53,7 +54,22 @@ export const login = async (request: FastifyRequest<{ Body: any }>, reply: Fasti
     // Remove password from user object
     delete user.password;
 
+    await logActivity(user.id, undefined, 'LOGIN', 'USER', user.id, user.name, `User logged in: ${user.email}`);
+
     return reply.send({ user, token });
+  } catch (error: any) {
+    return reply.status(500).send({ error: error.message });
+  }
+};
+
+export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
+  try {
+    const userId = (request as any).user?.id;
+    if (userId) {
+      const user = await authRepository.findUserById(userId);
+      await logActivity(userId, undefined, 'SIGNOUT', 'USER', userId, user?.name, `User logged out: ${user?.email}`);
+    }
+    return reply.send({ success: true });
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });
   }

@@ -87,7 +87,12 @@ export default function App() {
     }
   }, [user, activeWorkspaceId]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await api.logout();
+    } catch (err) {
+      console.error('Logout logging failed', err);
+    }
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('activeWorkspaceId');

@@ -40,7 +40,8 @@ export const updateCollection = async (request: FastifyRequest<{ Params: { id: s
   try {
     const { id } = request.params;
     const { name } = request.body;
-    const updatedCollection = await collectionRepository.updateCollection(id, name);
+    const userId = (request as any).user?.id || '';
+    const updatedCollection = await collectionRepository.updateCollection(id, name, userId);
     return updatedCollection;
   } catch (error: any) {
     reply.status(500).send({ error: error.message });
@@ -50,7 +51,8 @@ export const updateCollection = async (request: FastifyRequest<{ Params: { id: s
 export const deleteCollection = async (request: FastifyRequest<{ Params: { id: string } }>, reply: FastifyReply) => {
   try {
     const { id } = request.params;
-    await collectionRepository.deleteCollection(id);
+    const userId = (request as any).user?.id || '';
+    await collectionRepository.deleteCollection(id, userId);
     return { success: true, id };
   } catch (error: any) {
     reply.status(500).send({ error: error.message });

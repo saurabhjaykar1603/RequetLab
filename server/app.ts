@@ -16,6 +16,7 @@ import folderRoutes from './routes/folderRoutes.ts';
 import requestRoutes from './routes/requestRoutes.ts';
 import environmentRoutes from './routes/environmentRoutes.ts';
 import proxyRoutes from './routes/proxyRoutes.ts';
+import activityRoutes from './routes/activityRoutes.ts';
 
 dotenv.config();
 
@@ -43,6 +44,7 @@ fastify.register(folderRoutes, { prefix: '/api/folders' });
 fastify.register(requestRoutes, { prefix: '/api/requests' });
 fastify.register(environmentRoutes, { prefix: '/api/environments' });
 fastify.register(proxyRoutes, { prefix: '/api/proxy' });
+fastify.register(activityRoutes, { prefix: '/api/activity' });
 
 const start = async () => {
   try {

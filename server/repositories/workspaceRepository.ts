@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getQuery, getSingleQuery, runQuery } from '../db.ts';
 import { Workspace } from '../interfaces/workspace/Workspace.ts';
+import { logActivity } from './activityRepository.ts';
+import * as authRepository from './authRepository.ts';
 
 export const createWorkspace = async (name: string, ownerId: string, type: 'personal' | 'team' = 'personal'): Promise<Workspace> => {
   const id = uuidv4();
@@ -9,6 +11,8 @@ export const createWorkspace = async (name: string, ownerId: string, type: 'pers
   
   // Also add owner as member
   await addMemberToWorkspace(id, ownerId, 'admin');
+
+  await logActivity(ownerId, id, 'CREATE', 'WORKSPACE', id, name, `Workspace '${name}' created`);
   
   return res.rows[0];
 };
@@ -27,12 +31,17 @@ export const findWorkspaceById = async (id: string): Promise<Workspace | undefin
   return await getSingleQuery<Workspace>(sql, [id]);
 };
 
-export const deleteWorkspace = async (id: string) => {
+export const deleteWorkspace = async (id: string, userId: string) => {
+  const workspace = await findWorkspaceById(id);
   // SQLite doesn't always have FK cascade enabled, so we might need to delete members manually
   // or rely on the schema if it's set up correctly. Let's delete members first to be safe.
   await runQuery('DELETE FROM workspace_members WHERE "workspaceId" = $1', [id]);
   const sql = 'DELETE FROM workspaces WHERE id = $1';
   await runQuery(sql, [id]);
+
+  if (workspace) {
+    await logActivity(userId, id, 'DELETE', 'WORKSPACE', id, workspace.name, `Workspace '${workspace.name}' deleted`);
+  }
 };
 
 export const addMemberToWorkspace = async (workspaceId: string, userId: string, role: 'admin' | 'member' = 'member') => {
@@ -55,12 +64,15 @@ export const getMemberRole = async (workspaceId: string, userId: string): Promis
   return res?.role;
 };
 
-export const removeMemberFromWorkspace = async (workspaceId: string, userId: string) => {
+export const removeMemberFromWorkspace = async (workspaceId: string, userId: string, actorId: string) => {
+  const user = await authRepository.findUserById(userId);
   // Clear any invitation records for this user in this workspace
   await runQuery('DELETE FROM workspace_invitations WHERE "workspaceId" = $1 AND "inviteeId" = $2', [workspaceId, userId]);
   
   const sql = 'DELETE FROM workspace_members WHERE "workspaceId" = $1 AND "userId" = $2';
   await runQuery(sql, [workspaceId, userId]);
+
+  await logActivity(actorId, workspaceId, 'DELETE', 'USER', userId, user?.name, `Member '${user?.email}' removed from workspace`);
 };
 
 // Invitations
@@ -73,6 +85,10 @@ export const createInvitation = async (workspaceId: string, inviterId: string, i
     RETURNING *
   `;
   const res = await runQuery(sql, [id, workspaceId, inviterId, inviteeId, role]);
+  
+  const invitee = await authRepository.findUserById(inviteeId);
+  await logActivity(inviterId, workspaceId, 'INVITE', 'USER', inviteeId, invitee?.name, `Invited '${invitee?.email}' to workspace as ${role}`);
+
   return res.rows[0];
 };
 
@@ -87,8 +103,15 @@ export const getPendingInvitations = async (userId: string) => {
 };
 
 export const updateInvitationStatus = async (invitationId: string, status: 'accepted' | 'rejected') => {
+  const invitation = await findInvitationById(invitationId);
   const sql = 'UPDATE workspace_invitations SET status = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
   const res = await runQuery(sql, [status, invitationId]);
+
+  if (invitation) {
+    const action = status === 'accepted' ? 'ACCEPT' : 'REJECT';
+    await logActivity(invitation.inviteeId, invitation.workspaceId, action, 'INVITATION', invitationId, `Invitation ${status}`, `User ${status} invitation to workspace`);
+  }
+  
   return res.rows[0];
 };
 
