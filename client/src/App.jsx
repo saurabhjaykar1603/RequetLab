@@ -348,7 +348,7 @@ export default function App() {
   };
 
   const handleDeleteCollection = async (id, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     if (window.confirm('Delete collection and all contents?')) {
       await api.deleteCollection(id);
       if (activeRequest && activeRequest.collectionId === id) setActiveRequest(null);
@@ -356,8 +356,19 @@ export default function App() {
     }
   };
 
+  const handleUpdateCollectionName = async (id, name) => {
+    if (!name) return;
+    try {
+      await api.updateCollection(id, name);
+      loadData();
+      showToast({ message: 'Collection renamed', type: 'success' });
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
   const handleDeleteFolder = async (id, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     if (window.confirm('Delete folder and all requests inside?')) {
       await api.deleteFolder(id);
       if (activeRequest && activeRequest.folderId === id) setActiveRequest(null);
@@ -365,12 +376,34 @@ export default function App() {
     }
   };
 
+  const handleUpdateFolderName = async (id, name) => {
+    if (!name) return;
+    try {
+      await api.updateFolder(id, name);
+      loadData();
+      showToast({ message: 'Folder renamed', type: 'success' });
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
   const handleDeleteRequest = async (id, e) => {
-    e.stopPropagation();
+    if (e) e.stopPropagation();
     if (window.confirm('Delete request?')) {
       await api.deleteRequest(id);
       if (activeRequest && activeRequest.id === id) setActiveRequest(null);
       loadData();
+    }
+  };
+
+  const handleUpdateRequestName = async (id, name) => {
+    if (!name) return;
+    try {
+      await api.updateRequest(id, { name });
+      loadData();
+      showToast({ message: 'Request renamed', type: 'success' });
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
     }
   };
 
@@ -691,6 +724,9 @@ export default function App() {
             handleDeleteRequest={handleDeleteRequest}
             handleDeleteEnvironment={handleDeleteEnvironment}
             handleDuplicateRequest={handleDuplicateRequest}
+            handleUpdateCollectionName={handleUpdateCollectionName}
+            handleUpdateFolderName={handleUpdateFolderName}
+            handleUpdateRequestName={handleUpdateRequestName}
             activeRequest={activeRequest}
             setActiveRequest={setActiveRequest}
             globals={globals}

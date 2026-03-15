@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import RequestEditor from './RequestEditor';
 import ActivityLogs from './ActivityLogs';
+import EditableText from '../common/EditableText';
 
 const Dashboard = ({
   user,
@@ -46,6 +47,9 @@ const Dashboard = ({
   response,
   editorTab,
   setEditorTab,
+  handleUpdateCollectionName,
+  handleUpdateFolderName,
+  handleUpdateRequestName,
   handleSendRequest
 }) => (
   <div className="app-container">
@@ -121,7 +125,11 @@ const Dashboard = ({
               onDrop={(e) => handleDrop(e, { type: 'collection', id: col.id })}
             >
               {expanded[col.id] ? <ChevronDown size={16} style={{marginRight: '8px', color: 'var(--text-secondary)'}}/> : <ChevronRight size={16} style={{marginRight: '8px', color: 'var(--text-secondary)'}}/>}
-              <span style={{flex: 1}}>{col.name}</span>
+              <EditableText 
+                text={col.name} 
+                onSave={(newName) => handleUpdateCollectionName(col.id, newName)}
+                style={{ flex: 1, fontWeight: 500 }}
+              />
               <div className="item-actions">
                 <button className="icon-btn" onClick={(e) => { e.stopPropagation(); handleExportCollection(col); }} title="Export"><Download size={14} /></button>
                 <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalOpen('folder'); }} title="New Folder"><Folder size={14} /></button>
@@ -141,7 +149,11 @@ const Dashboard = ({
                       onDrop={(e) => handleDrop(e, { type: 'folder', id: folder.id, collectionId: col.id })}
                     >
                       {expanded[folder.id] ? <FolderOpen size={14} style={{marginRight: '8px'}}/> : <Folder size={14} style={{marginRight: '8px'}}/>}
-                      <span style={{flex: 1}}>{folder.name}</span>
+                      <EditableText 
+                        text={folder.name} 
+                        onSave={(newName) => handleUpdateFolderName(folder.id, newName)}
+                        style={{ flex: 1 }}
+                      />
                       <div className="item-actions">
                         <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalOpen('request'); }} title="New Request"><Plus size={14} /></button>
                         <button className="icon-btn" onClick={(e) => handleDeleteFolder(folder.id, e)}><Trash2 size={14} /></button>
@@ -157,8 +169,11 @@ const Dashboard = ({
                         onClick={() => setActiveRequest(req)}
                       >
                         <span className={`method-badge method-${req.method}`}>{req.method}</span>
-                        <div className="name-wrapper">
-                          <span>{req.name}</span>
+                        <div className="name-wrapper" style={{ flex: 1, overflow: 'hidden' }}>
+                          <EditableText 
+                            text={req.name} 
+                            onSave={(newName) => handleUpdateRequestName(req.id, newName)}
+                          />
                         </div>
                         <div className="item-actions">
                           <button className="icon-btn" onClick={(e) => handleDuplicateRequest(req, e)} title="Duplicate"><Copy size={14} /></button>
@@ -178,8 +193,11 @@ const Dashboard = ({
                     onClick={() => setActiveRequest(req)}
                   >
                     <span className={`method-badge method-${req.method}`}>{req.method}</span>
-                    <div className="name-wrapper">
-                      <span>{req.name}</span>
+                    <div className="name-wrapper" style={{ flex: 1, overflow: 'hidden' }}>
+                      <EditableText 
+                        text={req.name} 
+                        onSave={(newName) => handleUpdateRequestName(req.id, newName)}
+                      />
                     </div>
                     <div className="item-actions">
                       <button className="icon-btn" onClick={(e) => handleDuplicateRequest(req, e)} title="Duplicate"><Copy size={14} /></button>
