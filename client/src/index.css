@@ -346,6 +346,8 @@ body {
   border: none;
   padding: 8px 12px;
   font-size: 13px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  line-height: 1.4;
   outline: none;
 }
 
@@ -914,8 +916,7 @@ body {
   display: flex;
   flex: 1;
   height: 100%;
-  min-height: 32px;
-  align-items: center;
+  align-items: stretch;
 }
 
 .highlighted-input-backdrop {
@@ -924,17 +925,17 @@ body {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 0 12px;
+  padding: 8px 12px;
   display: flex;
   align-items: center;
-  font-family: inherit;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
   font-size: 13px;
+  line-height: 1.4;
   pointer-events: none;
   white-space: pre;
   overflow: hidden;
   color: var(--text-primary);
   opacity: 1;
-  line-height: 32px;
 }
 
 .url-input.highlight-mode {

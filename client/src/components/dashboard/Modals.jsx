@@ -508,6 +508,38 @@ const Modals = ({
           </div>
         </div>
       )}
+      {modalOpen === 'delete-confirm' && (
+        <div className="modal-overlay" onClick={() => setModalOpen(null)}>
+          <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ef4444' }}>
+                <AlertTriangle size={20} />
+                <h3 style={{ margin: 0 }}>Delete {modalData.type}?</h3>
+              </div>
+              <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
+            </div>
+            <div className="modal-body" style={{ padding: '20px', lineHeight: '1.5' }}>
+              <p>Are you sure you want to delete <strong>{modalData.name}</strong>?</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                {modalData.message || 'This action cannot be undone.'}
+              </p>
+            </div>
+            <div className="modal-footer" style={{ background: 'rgba(0,0,0,0.05)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+              <button className="btn-secondary" onClick={() => setModalOpen(null)}>Cancel</button>
+              <button 
+                className="btn-primary" 
+                style={{ background: '#ef4444', borderColor: '#ef4444' }}
+                onClick={() => {
+                  modalData.onConfirm();
+                  setModalOpen(null);
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {modalOpen === 'workspace-delete-confirm' && (
         <div className="modal-overlay" onClick={() => setModalOpen('workspace-switch')}>
           <div className="modal" style={{ maxWidth: '400px' }} onClick={e => e.stopPropagation()}>

@@ -304,16 +304,23 @@ export default function App() {
   };
 
   const handleDeleteEnvironment = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this environment?')) return;
-    try {
-      const res = await api.deleteEnvironment(id);
-      if (res.error) throw new Error(res.error);
-      if (activeEnvId === id) setActiveEnvId('');
-      await loadData();
-      showToast({ message: 'Environment deleted', type: 'info' });
-    } catch (err) {
-      showToast({ message: err.message, type: 'error' });
-    }
+    const env = environments.find(e => e.id === id);
+    setModalData({
+      type: 'Environment',
+      name: env?.name || 'Environment',
+      onConfirm: async () => {
+        try {
+          const res = await api.deleteEnvironment(id);
+          if (res.error) throw new Error(res.error);
+          if (activeEnvId === id) setActiveEnvId('');
+          await loadData();
+          showToast({ message: 'Environment deleted', type: 'info' });
+        } catch (err) {
+          showToast({ message: err.message, type: 'error' });
+        }
+      }
+    });
+    setModalOpen('delete-confirm');
   };
 
   const handleCreateFolder = async (e) => {
@@ -349,11 +356,19 @@ export default function App() {
 
   const handleDeleteCollection = async (id, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm('Delete collection and all contents?')) {
-      await api.deleteCollection(id);
-      if (activeRequest && activeRequest.collectionId === id) setActiveRequest(null);
-      loadData();
-    }
+    const col = collections.find(c => c.id === id);
+    setModalData({
+      type: 'Collection',
+      name: col?.name || 'Collection',
+      message: 'This will permanently delete the collection and all requests inside.',
+      onConfirm: async () => {
+        await api.deleteCollection(id);
+        if (activeRequest && activeRequest.collectionId === id) setActiveRequest(null);
+        loadData();
+        showToast({ message: 'Collection deleted', type: 'info' });
+      }
+    });
+    setModalOpen('delete-confirm');
   };
 
   const handleUpdateCollectionName = async (id, name) => {
@@ -369,11 +384,19 @@ export default function App() {
 
   const handleDeleteFolder = async (id, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm('Delete folder and all requests inside?')) {
-      await api.deleteFolder(id);
-      if (activeRequest && activeRequest.folderId === id) setActiveRequest(null);
-      loadData();
-    }
+    const folder = folders.find(f => f.id === id);
+    setModalData({
+      type: 'Folder',
+      name: folder?.name || 'Folder',
+      message: 'This will delete the folder and all requests inside.',
+      onConfirm: async () => {
+        await api.deleteFolder(id);
+        if (activeRequest && activeRequest.folderId === id) setActiveRequest(null);
+        loadData();
+        showToast({ message: 'Folder deleted', type: 'info' });
+      }
+    });
+    setModalOpen('delete-confirm');
   };
 
   const handleUpdateFolderName = async (id, name) => {
@@ -389,11 +412,18 @@ export default function App() {
 
   const handleDeleteRequest = async (id, e) => {
     if (e) e.stopPropagation();
-    if (window.confirm('Delete request?')) {
-      await api.deleteRequest(id);
-      if (activeRequest && activeRequest.id === id) setActiveRequest(null);
-      loadData();
-    }
+    const req = requests.find(r => r.id === id);
+    setModalData({
+      type: 'Request',
+      name: req?.name || 'Request',
+      onConfirm: async () => {
+        await api.deleteRequest(id);
+        if (activeRequest && activeRequest.id === id) setActiveRequest(null);
+        loadData();
+        showToast({ message: 'Request deleted', type: 'info' });
+      }
+    });
+    setModalOpen('delete-confirm');
   };
 
   const handleUpdateRequestName = async (id, name) => {
