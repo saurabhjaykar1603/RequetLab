@@ -31,7 +31,10 @@ export default function Login({ onLoginSuccess }) {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <h1>Welcome Back</h1>
+        <div className="auth-header">
+          <img src="/favicon.png" alt="RequestLab Logo" className="brand-logo-large" />
+          <h1>Welcome Back</h1>
+        </div>
         <p>Log in to your RequestLab account</p>
         
         {error && <div className="error-message" style={{ color: 'var(--danger)', marginBottom: '16px', fontSize: '14px' }}>{error}</div>}
