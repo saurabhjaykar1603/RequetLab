@@ -1,7 +1,8 @@
-import { FastifyRequest, FastifyReply } from 'fastify';
+import { FastifyReply, FastifyRequest } from 'fastify';
+import * as authRepository from '../repositories/authRepository.ts';
 import * as collectionRepository from '../repositories/collectionRepository.ts';
 import * as importRepository from '../repositories/importRepository.ts';
-import { Collection } from '../interfaces/collection/Collection.ts';
+import * as workspaceRepository from '../repositories/workspaceRepository.ts';
 
 export const getCollections = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
@@ -28,9 +29,24 @@ export const createCollection = async (request: FastifyRequest<{ Body: { name: s
 export const importCollection = async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
   try {
     const userId = (request as any).user?.id || '';
-    const workspaceId = request.headers['x-workspace-id'] as string;
+    let workspaceId = request.headers['x-workspace-id'] as string;
+    
+    // Auto-create workspace if none exist and none is provided
+    if (!workspaceId) {
+      const userWorkspaces = await workspaceRepository.getUserWorkspaces(userId);
+      if (userWorkspaces.length === 0) {
+        const user = await authRepository.findUserById(userId);
+        const workspaceName = user ? `${user.name}'s Workspace` : 'My Workspace';
+        const newWorkspace = await workspaceRepository.createWorkspace(workspaceName, userId, 'personal');
+        workspaceId = newWorkspace.id;
+      } else {
+        // Default to the first workspace if none specified but some exist
+        workspaceId = userWorkspaces[0].id;
+      }
+    }
+
     const result = await importRepository.importCollectionTree(request.body as any, userId, workspaceId);
-    reply.status(201).send(result);
+    reply.status(201).send({ ...result, workspaceId });
   } catch (error: any) {
     reply.status(500).send({ error: error.message });
   }
