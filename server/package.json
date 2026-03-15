@@ -7,7 +7,11 @@
     "dev:server": "tsx --watch app.ts",
     "dev:client": "cd ../client && npm run dev",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "start": "tsx app.ts"
+    "build:client": "cd ../client && npm run build",
+    "build:server": "tsc",
+    "build": "npm run build:client && npm run build:server",
+    "start": "tsx app.ts",
+    "prod": "NODE_ENV=production tsx app.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +19,7 @@
   "type": "module",
   "dependencies": {
     "@fastify/cors": "^11.2.0",
+    "@fastify/static": "^9.0.0",
     "bcrypt": "^6.0.0",
     "dotenv": "^17.3.1",
     "fastify": "^5.8.2",

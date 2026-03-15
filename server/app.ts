@@ -1,5 +1,8 @@
 import Fastify, { FastifyInstance } from 'fastify';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import logger from './logger.ts';
 
@@ -25,10 +28,19 @@ const fastify: FastifyInstance = Fastify({
   logger: true 
 });
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 // Register Core Plugins
 fastify.register(cors, {
   origin: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+});
+
+// Serve static files from the React app
+fastify.register(fastifyStatic, {
+  root: path.join(__dirname, '../client/dist'),
+  prefix: '/', 
 });
 
 // Register Custom Plugins
@@ -45,6 +57,15 @@ fastify.register(requestRoutes, { prefix: '/api/requests' });
 fastify.register(environmentRoutes, { prefix: '/api/environments' });
 fastify.register(proxyRoutes, { prefix: '/api/proxy' });
 fastify.register(activityRoutes, { prefix: '/api/activity' });
+
+// Catch-all route to serve React's index.html for SPA routing
+fastify.setNotFoundHandler((request, reply) => {
+  if (request.url.startsWith('/api')) {
+    reply.code(404).send({ error: 'Not Found' });
+    return;
+  }
+  reply.sendFile('index.html');
+});
 
 const start = async () => {
   try {
