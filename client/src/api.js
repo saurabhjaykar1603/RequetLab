@@ -2,9 +2,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 const getHeaders = () => {
   const headers = {};
-  const token = localStorage.getItem('token');
   const workspaceId = localStorage.getItem('activeWorkspaceId');
-  if (token) headers['Authorization'] = `Bearer ${token}`;
   if (workspaceId) headers['x-workspace-id'] = workspaceId;
   return headers;
 };
@@ -19,7 +17,8 @@ export const api = {
     const res = await fetch(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -27,35 +26,39 @@ export const api = {
     const res = await fetch(`${BASE_URL}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ name, email, password }),
+      credentials: 'include'
     });
     return res.json();
   },
   logout: async () => {
     const res = await fetch(`${BASE_URL}/auth/logout`, {
       method: 'POST',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
 
   // Workspaces
   getWorkspaces: async () => {
-    const res = await fetch(`${BASE_URL}/workspaces`, { headers: getHeaders() });
+    const res = await fetch(`${BASE_URL}/workspaces`, { headers: getHeaders(), credentials: 'include' });
     return res.json();
   },
   createWorkspace: async (name, type = 'personal') => {
     const res = await fetch(`${BASE_URL}/workspaces`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify({ name, type })
+      body: JSON.stringify({ name, type }),
+      credentials: 'include'
     });
     return res.json();
   },
   deleteWorkspace: async (id) => {
     const res = await fetch(`${BASE_URL}/workspaces/${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -63,26 +66,30 @@ export const api = {
     const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify({ email, role })
+      body: JSON.stringify({ email, role }),
+      credentials: 'include'
     });
     return res.json();
   },
   getWorkspaceMembers: async (workspaceId) => {
     const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members`, {
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
   removeWorkspaceMember: async (workspaceId, userId) => {
     const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members/${userId}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
   getInvitations: async () => {
     const res = await fetch(`${BASE_URL}/workspaces/invitations`, {
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -90,21 +97,23 @@ export const api = {
     const res = await fetch(`${BASE_URL}/workspaces/invitations/${invitationId}/respond`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify({ status })
+      body: JSON.stringify({ status }),
+      credentials: 'include'
     });
     return res.json();
   },
 
   // Collections
   getCollections: async () => {
-    const res = await fetch(`${BASE_URL}/collections`, { headers: getHeaders() });
+    const res = await fetch(`${BASE_URL}/collections`, { headers: getHeaders(), credentials: 'include' });
     return res.json();
   },
   createCollection: async (name) => {
     const res = await fetch(`${BASE_URL}/collections`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name }),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -112,28 +121,31 @@ export const api = {
     const res = await fetch(`${BASE_URL}/collections/${id}`, {
       method: 'PUT',
       headers: getPostHeaders(),
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name }),
+      credentials: 'include'
     });
     return res.json();
   },
   deleteCollection: async (id) => {
     const res = await fetch(`${BASE_URL}/collections/${id}`, { 
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
 
   // Folders
   getFolders: async (collectionId) => {
-    const res = await fetch(`${BASE_URL}/folders${collectionId ? `?collectionId=${collectionId}` : ''}`, { headers: getHeaders() });
+    const res = await fetch(`${BASE_URL}/folders${collectionId ? `?collectionId=${collectionId}` : ''}`, { headers: getHeaders(), credentials: 'include' });
     return res.json();
   },
   createFolder: async (name, collectionId) => {
     const res = await fetch(`${BASE_URL}/folders`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify({ name, collectionId })
+      body: JSON.stringify({ name, collectionId }),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -141,14 +153,16 @@ export const api = {
     const res = await fetch(`${BASE_URL}/folders/${id}`, {
       method: 'PUT',
       headers: getPostHeaders(),
-      body: JSON.stringify({ name })
+      body: JSON.stringify({ name }),
+      credentials: 'include'
     });
     return res.json();
   },
   deleteFolder: async (id) => {
     const res = await fetch(`${BASE_URL}/folders/${id}`, { 
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -158,18 +172,19 @@ export const api = {
     let url = `${BASE_URL}/requests`;
     if (folderId) url += `?folderId=${folderId}`;
     else if (collectionId) url += `?collectionId=${collectionId}`;
-    const res = await fetch(url, { headers: getHeaders() });
+    const res = await fetch(url, { headers: getHeaders(), credentials: 'include' });
     return res.json();
   },
   getAllRequests: async () => {
-    const res = await fetch(`${BASE_URL}/requests`, { headers: getHeaders() });
+    const res = await fetch(`${BASE_URL}/requests`, { headers: getHeaders(), credentials: 'include' });
     return res.json();
   },
   createRequest: async (data) => {
     const res = await fetch(`${BASE_URL}/requests`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -177,28 +192,31 @@ export const api = {
     const res = await fetch(`${BASE_URL}/requests/${id}`, {
       method: 'PUT',
       headers: getPostHeaders(),
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
+      credentials: 'include'
     });
     return res.json();
   },
   deleteRequest: async (id) => {
     const res = await fetch(`${BASE_URL}/requests/${id}`, { 
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
 
   // Environments
   getEnvironments: async () => {
-    const res = await fetch(`${BASE_URL}/environments`, { headers: getHeaders() });
+    const res = await fetch(`${BASE_URL}/environments`, { headers: getHeaders(), credentials: 'include' });
     return res.json();
   },
   createEnvironment: async (name, variables = {}) => {
     const res = await fetch(`${BASE_URL}/environments`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify({ name, variables })
+      body: JSON.stringify({ name, variables }),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -206,14 +224,16 @@ export const api = {
     const res = await fetch(`${BASE_URL}/environments/${id}`, {
       method: 'PUT',
       headers: getPostHeaders(),
-      body: JSON.stringify({ name, variables })
+      body: JSON.stringify({ name, variables }),
+      credentials: 'include'
     });
     return res.json();
   },
   deleteEnvironment: async (id) => {
     const res = await fetch(`${BASE_URL}/environments/${id}`, {
       method: 'DELETE',
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -223,7 +243,8 @@ export const api = {
     const res = await fetch(`${BASE_URL}/proxy`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify(config)
+      body: JSON.stringify(config),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -231,7 +252,8 @@ export const api = {
     const res = await fetch(`${BASE_URL}/collections/import`, {
       method: 'POST',
       headers: getPostHeaders(),
-      body: JSON.stringify(tree)
+      body: JSON.stringify(tree),
+      credentials: 'include'
     });
     return res.json();
   },
@@ -244,7 +266,8 @@ export const api = {
     if (filters.entityType) params.append('entityType', filters.entityType);
 
     const res = await fetch(`${BASE_URL}/activity?${params.toString()}`, {
-      headers: getHeaders()
+      headers: getHeaders(),
+      credentials: 'include'
     });
     return res.json();
   }

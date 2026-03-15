@@ -24,9 +24,17 @@ export const signup = async (request: FastifyRequest<{ Body: any }>, reply: Fast
     const user = await authRepository.createUser(name, email, passwordHash);
 
     // Create token
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15s' });
 
-    return reply.status(201).send({ user, token });
+    reply.setCookie('token', token, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 // 15 seconds
+    });
+
+    return reply.status(201).send({ user });
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });
   }
@@ -49,14 +57,22 @@ export const login = async (request: FastifyRequest<{ Body: any }>, reply: Fasti
     }
 
     // Create token
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '24h' });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15s' });
 
     // Remove password from user object
     delete user.password;
 
     await logActivity(user.id, undefined, 'LOGIN', 'USER', user.id, user.name, `User logged in: ${user.email}`);
 
-    return reply.send({ user, token });
+    reply.setCookie('token', token, {
+      path: '/',
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 // 15 seconds
+    });
+
+    return reply.send({ user });
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });
   }
@@ -69,6 +85,7 @@ export const logout = async (request: FastifyRequest, reply: FastifyReply) => {
       const user = await authRepository.findUserById(userId);
       await logActivity(userId, undefined, 'SIGNOUT', 'USER', userId, user?.name, `User logged out: ${user?.email}`);
     }
+    reply.clearCookie('token', { path: '/' });
     return reply.send({ success: true });
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });

@@ -7,12 +7,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'supersecret';
 export default fp(async (fastify: FastifyInstance) => {
   fastify.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
-      const authHeader = request.headers.authorization;
-      if (!authHeader) {
+      const token = request.cookies.token;
+      if (!token) {
         throw new Error('No token provided');
       }
 
-      const token = authHeader.split(' ')[1];
       const decoded = jwt.verify(token, JWT_SECRET);
       (request as any).user = decoded;
     } catch (err: any) {

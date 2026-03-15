@@ -17,7 +17,6 @@ export default function Login({ onLoginSuccess }) {
       const res = await api.login(formData.email, formData.password);
       if (res.error) throw new Error(res.error);
       
-      localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.user));
       onLoginSuccess(res.user);
       navigate('/');

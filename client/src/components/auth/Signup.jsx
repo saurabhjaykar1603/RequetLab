@@ -17,7 +17,6 @@ export default function Signup({ onSignupSuccess }) {
       const res = await api.signup(formData.name, formData.email, formData.password);
       if (res.error) throw new Error(res.error);
       
-      localStorage.setItem('token', res.token);
       localStorage.setItem('user', JSON.stringify(res.user));
       onSignupSuccess(res.user);
       navigate('/');

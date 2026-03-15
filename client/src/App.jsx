@@ -100,7 +100,6 @@ export default function App() {
     } catch (err) {
       console.error('Logout logging failed', err);
     }
-    localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('activeWorkspaceId');
     setUser(null);
