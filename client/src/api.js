@@ -11,160 +11,138 @@ const getPostHeaders = () => {
   return { ...getHeaders(), 'Content-Type': 'application/json' };
 };
 
+const request = async (url, options = {}) => {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...options.headers,
+      ...getHeaders(),
+    },
+    credentials: 'include'
+  });
+
+  const data = await res.json();
+  
+  const isAuthRoute = url.includes('/auth/login') || url.includes('/auth/logout');
+  if (res.status === 401 || (data.error && data.error.includes('Unauthorized'))) {
+    if (api.onUnauthorized && !isAuthRoute) api.onUnauthorized();
+  }
+
+  return data;
+};
+
 export const api = {
+  onUnauthorized: null,
+
   // Auth
   login: async (email, password) => {
-    const res = await fetch(`${BASE_URL}/auth/login`, {
+    return request(`${BASE_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-      credentials: 'include'
+      body: JSON.stringify({ email, password })
     });
-    return res.json();
   },
   signup: async (name, email, password) => {
-    const res = await fetch(`${BASE_URL}/auth/signup`, {
+    return request(`${BASE_URL}/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, email, password }),
-      credentials: 'include'
+      body: JSON.stringify({ name, email, password })
     });
-    return res.json();
   },
   logout: async () => {
-    const res = await fetch(`${BASE_URL}/auth/logout`, {
-      method: 'POST',
-      headers: getHeaders(),
-      credentials: 'include'
+    return request(`${BASE_URL}/auth/logout`, {
+      method: 'POST'
     });
-    return res.json();
   },
 
   // Workspaces
   getWorkspaces: async () => {
-    const res = await fetch(`${BASE_URL}/workspaces`, { headers: getHeaders(), credentials: 'include' });
-    return res.json();
+    return request(`${BASE_URL}/workspaces`);
   },
   createWorkspace: async (name, type = 'personal') => {
-    const res = await fetch(`${BASE_URL}/workspaces`, {
+    return request(`${BASE_URL}/workspaces`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ name, type }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, type })
     });
-    return res.json();
   },
   deleteWorkspace: async (id) => {
-    const res = await fetch(`${BASE_URL}/workspaces/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include'
+    return request(`${BASE_URL}/workspaces/${id}`, {
+      method: 'DELETE'
     });
-    return res.json();
   },
   inviteMember: async (workspaceId, email, role = 'member') => {
-    const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members`, {
+    return request(`${BASE_URL}/workspaces/${workspaceId}/members`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ email, role }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, role })
     });
-    return res.json();
   },
   getWorkspaceMembers: async (workspaceId) => {
-    const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members`, {
-      headers: getHeaders(),
-      credentials: 'include'
-    });
-    return res.json();
+    return request(`${BASE_URL}/workspaces/${workspaceId}/members`);
   },
   removeWorkspaceMember: async (workspaceId, userId) => {
-    const res = await fetch(`${BASE_URL}/workspaces/${workspaceId}/members/${userId}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include'
+    return request(`${BASE_URL}/workspaces/${workspaceId}/members/${userId}`, {
+      method: 'DELETE'
     });
-    return res.json();
   },
   getInvitations: async () => {
-    const res = await fetch(`${BASE_URL}/workspaces/invitations`, {
-      headers: getHeaders(),
-      credentials: 'include'
-    });
-    return res.json();
+    return request(`${BASE_URL}/workspaces/invitations`);
   },
   respondToInvitation: async (invitationId, status) => {
-    const res = await fetch(`${BASE_URL}/workspaces/invitations/${invitationId}/respond`, {
+    return request(`${BASE_URL}/workspaces/invitations/${invitationId}/respond`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ status }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status })
     });
-    return res.json();
   },
 
   // Collections
   getCollections: async () => {
-    const res = await fetch(`${BASE_URL}/collections`, { headers: getHeaders(), credentials: 'include' });
-    return res.json();
+    return request(`${BASE_URL}/collections`);
   },
   createCollection: async (name) => {
-    const res = await fetch(`${BASE_URL}/collections`, {
+    return request(`${BASE_URL}/collections`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ name }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
     });
-    return res.json();
   },
   updateCollection: async (id, name) => {
-    const res = await fetch(`${BASE_URL}/collections/${id}`, {
+    return request(`${BASE_URL}/collections/${id}`, {
       method: 'PUT',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ name }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
     });
-    return res.json();
   },
   deleteCollection: async (id) => {
-    const res = await fetch(`${BASE_URL}/collections/${id}`, { 
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include'
+    return request(`${BASE_URL}/collections/${id}`, { 
+      method: 'DELETE'
     });
-    return res.json();
   },
 
   // Folders
   getFolders: async (collectionId) => {
-    const res = await fetch(`${BASE_URL}/folders${collectionId ? `?collectionId=${collectionId}` : ''}`, { headers: getHeaders(), credentials: 'include' });
-    return res.json();
+    return request(`${BASE_URL}/folders${collectionId ? `?collectionId=${collectionId}` : ''}`);
   },
   createFolder: async (name, collectionId) => {
-    const res = await fetch(`${BASE_URL}/folders`, {
+    return request(`${BASE_URL}/folders`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ name, collectionId }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, collectionId })
     });
-    return res.json();
   },
   updateFolder: async (id, name) => {
-    const res = await fetch(`${BASE_URL}/folders/${id}`, {
+    return request(`${BASE_URL}/folders/${id}`, {
       method: 'PUT',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ name }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
     });
-    return res.json();
   },
   deleteFolder: async (id) => {
-    const res = await fetch(`${BASE_URL}/folders/${id}`, { 
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include'
+    return request(`${BASE_URL}/folders/${id}`, { 
+      method: 'DELETE'
     });
-    return res.json();
   },
 
   // Requests
@@ -172,90 +150,69 @@ export const api = {
     let url = `${BASE_URL}/requests`;
     if (folderId) url += `?folderId=${folderId}`;
     else if (collectionId) url += `?collectionId=${collectionId}`;
-    const res = await fetch(url, { headers: getHeaders(), credentials: 'include' });
-    return res.json();
+    return request(url);
   },
   getAllRequests: async () => {
-    const res = await fetch(`${BASE_URL}/requests`, { headers: getHeaders(), credentials: 'include' });
-    return res.json();
+    return request(`${BASE_URL}/requests`);
   },
   createRequest: async (data) => {
-    const res = await fetch(`${BASE_URL}/requests`, {
+    return request(`${BASE_URL}/requests`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify(data),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
-    return res.json();
   },
   updateRequest: async (id, data) => {
-    const res = await fetch(`${BASE_URL}/requests/${id}`, {
+    return request(`${BASE_URL}/requests/${id}`, {
       method: 'PUT',
-      headers: getPostHeaders(),
-      body: JSON.stringify(data),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
     });
-    return res.json();
   },
   deleteRequest: async (id) => {
-    const res = await fetch(`${BASE_URL}/requests/${id}`, { 
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include'
+    return request(`${BASE_URL}/requests/${id}`, { 
+      method: 'DELETE'
     });
-    return res.json();
   },
 
   // Environments
   getEnvironments: async () => {
-    const res = await fetch(`${BASE_URL}/environments`, { headers: getHeaders(), credentials: 'include' });
-    return res.json();
+    return request(`${BASE_URL}/environments`);
   },
   createEnvironment: async (name, variables = {}) => {
-    const res = await fetch(`${BASE_URL}/environments`, {
+    return request(`${BASE_URL}/environments`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ name, variables }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, variables })
     });
-    return res.json();
   },
   updateEnvironment: async (id, name, variables = {}) => {
-    const res = await fetch(`${BASE_URL}/environments/${id}`, {
+    return request(`${BASE_URL}/environments/${id}`, {
       method: 'PUT',
-      headers: getPostHeaders(),
-      body: JSON.stringify({ name, variables }),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, variables })
     });
-    return res.json();
   },
   deleteEnvironment: async (id) => {
-    const res = await fetch(`${BASE_URL}/environments/${id}`, {
-      method: 'DELETE',
-      headers: getHeaders(),
-      credentials: 'include'
+    return request(`${BASE_URL}/environments/${id}`, {
+      method: 'DELETE'
     });
-    return res.json();
   },
 
   // Execution
   executeRequest: async (config) => {
-    const res = await fetch(`${BASE_URL}/proxy`, {
+    return request(`${BASE_URL}/proxy`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify(config),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config)
     });
-    return res.json();
   },
   importCollection: async (tree) => {
-    const res = await fetch(`${BASE_URL}/collections/import`, {
+    return request(`${BASE_URL}/collections/import`, {
       method: 'POST',
-      headers: getPostHeaders(),
-      body: JSON.stringify(tree),
-      credentials: 'include'
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(tree)
     });
-    return res.json();
   },
   getActivityLogs: async (filters = {}) => {
     const params = new URLSearchParams();
@@ -265,10 +222,6 @@ export const api = {
     if (filters.action) params.append('action', filters.action);
     if (filters.entityType) params.append('entityType', filters.entityType);
 
-    const res = await fetch(`${BASE_URL}/activity?${params.toString()}`, {
-      headers: getHeaders(),
-      credentials: 'include'
-    });
-    return res.json();
+    return request(`${BASE_URL}/activity?${params.toString()}`);
   }
 };

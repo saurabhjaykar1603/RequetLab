@@ -53,6 +53,11 @@ export default function App() {
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
 
+  useEffect(() => {
+    api.onUnauthorized = () => handleLogout('Your session has expired. Please log in again.');
+    return () => { api.onUnauthorized = null; };
+  }, []);
+
   const loadData = async () => {
     if (!user) return;
     try {
@@ -83,7 +88,6 @@ export default function App() {
       }
     } catch (err) {
       console.error(err);
-      if (err.message && err.message.includes('Unauthorized')) handleLogout();
     }
   };
 
@@ -94,7 +98,7 @@ export default function App() {
     }
   }, [user, activeWorkspaceId]);
 
-  const handleLogout = async () => {
+  const handleLogout = async (message = 'Logged out successfully') => {
     try {
       await api.logout();
     } catch (err) {
@@ -109,7 +113,7 @@ export default function App() {
     setFolders([]);
     setRequests([]);
     setActiveRequest(null);
-    showToast({ message: 'Logged out successfully', type: 'info' });
+    showToast({ message, type: 'info' });
   };
 
   const handleWorkspaceChange = (id) => {

@@ -24,14 +24,14 @@ export const signup = async (request: FastifyRequest<{ Body: any }>, reply: Fast
     const user = await authRepository.createUser(name, email, passwordHash);
 
     // Create token
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15s' });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '2d' });
 
     reply.setCookie('token', token, {
       path: '/',
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 // 15 seconds
+      maxAge: 2 * 24 * 60 * 60 // 2 days in seconds
     });
 
     return reply.status(201).send({ user });
@@ -57,7 +57,7 @@ export const login = async (request: FastifyRequest<{ Body: any }>, reply: Fasti
     }
 
     // Create token
-    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '15s' });
+    const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: '2d' });
 
     // Remove password from user object
     delete user.password;
@@ -69,7 +69,7 @@ export const login = async (request: FastifyRequest<{ Body: any }>, reply: Fasti
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 15 // 15 seconds
+      maxAge: 2 * 24 * 60 * 60 // 2 days in seconds
     });
 
     return reply.send({ user });
