@@ -33,15 +33,18 @@ export const findWorkspaceById = async (id: string): Promise<Workspace | undefin
 
 export const deleteWorkspace = async (id: string, userId: string) => {
   const workspace = await findWorkspaceById(id);
+  
+  if (workspace) {
+    // Log before deletion, using 'undefined' for workspaceId so the log entry itself
+    // is not deleted by the database's ON DELETE CASCADE constraint.
+    await logActivity(userId, undefined, 'DELETE', 'WORKSPACE', id, workspace.name, `Workspace '${workspace.name}' deleted`);
+  }
+
   // SQLite doesn't always have FK cascade enabled, so we might need to delete members manually
   // or rely on the schema if it's set up correctly. Let's delete members first to be safe.
   await runQuery('DELETE FROM workspace_members WHERE "workspaceId" = $1', [id]);
   const sql = 'DELETE FROM workspaces WHERE id = $1';
   await runQuery(sql, [id]);
-
-  if (workspace) {
-    await logActivity(userId, id, 'DELETE', 'WORKSPACE', id, workspace.name, `Workspace '${workspace.name}' deleted`);
-  }
 };
 
 export const addMemberToWorkspace = async (workspaceId: string, userId: string, role: 'admin' | 'member' = 'member') => {
