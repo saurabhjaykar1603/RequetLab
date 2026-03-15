@@ -47,6 +47,13 @@ export const deleteWorkspace = async (id: string, userId: string) => {
   await runQuery(sql, [id]);
 };
 
+export const updateWorkspace = async (id: string, name: string, userId: string): Promise<Workspace | undefined> => {
+  const sql = 'UPDATE workspaces SET name = $1, "updatedAt" = CURRENT_TIMESTAMP WHERE id = $2 RETURNING *';
+  const res = await runQuery(sql, [name, id]);
+  await logActivity(userId, id, 'UPDATE', 'WORKSPACE', id, name, `Workspace renamed to '${name}'`);
+  return res.rows[0];
+};
+
 export const addMemberToWorkspace = async (workspaceId: string, userId: string, role: 'admin' | 'member' = 'member') => {
   const sql = 'INSERT INTO workspace_members ("workspaceId", "userId", role) VALUES ($1, $2, $3) ON CONFLICT DO NOTHING';
   await runQuery(sql, [workspaceId, userId, role]);

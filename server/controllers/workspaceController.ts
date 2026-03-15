@@ -145,3 +145,22 @@ export const deleteWorkspace = async (request: FastifyRequest<{ Params: { id: st
     return reply.status(500).send({ error: error.message });
   }
 };
+
+export const updateWorkspace = async (request: FastifyRequest<{ Params: { id: string }; Body: { name: string } }>, reply: FastifyReply) => {
+  try {
+    const { id } = request.params;
+    const { name } = request.body;
+    const requesterId = (request as any).user.id;
+
+    // Admin-only check
+    const requesterRole = await workspaceRepository.getMemberRole(id, requesterId);
+    if (requesterRole !== 'admin') {
+      return reply.status(403).send({ error: 'Only admins can update workspaces' });
+    }
+
+    const workspace = await workspaceRepository.updateWorkspace(id, name, requesterId);
+    return workspace;
+  } catch (error: any) {
+    return reply.status(500).send({ error: error.message });
+  }
+};

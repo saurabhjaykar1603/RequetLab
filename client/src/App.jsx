@@ -164,6 +164,19 @@ export default function App() {
     }
   };
 
+  const handleUpdateWorkspaceName = async (id, name) => {
+    if (!name) return;
+    try {
+      const res = await api.updateWorkspace(id, name);
+      if (res.error) throw new Error(res.error);
+      
+      setWorkspaces(prev => prev.map(w => w.id === id ? { ...w, name } : w));
+      showToast({ message: 'Workspace renamed', type: 'success' });
+    } catch (err) {
+      showToast({ message: err.message, type: 'error' });
+    }
+  };
+
   const handleInviteMember = async (e) => {
     e.preventDefault();
     try {
@@ -760,6 +773,7 @@ export default function App() {
             handleUpdateCollectionName={handleUpdateCollectionName}
             handleUpdateFolderName={handleUpdateFolderName}
             handleUpdateRequestName={handleUpdateRequestName}
+            handleUpdateWorkspaceName={handleUpdateWorkspaceName}
             activeRequest={activeRequest}
             setActiveRequest={setActiveRequest}
             globals={globals}

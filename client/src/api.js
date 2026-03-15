@@ -71,6 +71,13 @@ export const api = {
       method: 'DELETE'
     });
   },
+  updateWorkspace: async (id, name) => {
+    return request(`${BASE_URL}/workspaces/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+  },
   inviteMember: async (workspaceId, email, role = 'member') => {
     return request(`${BASE_URL}/workspaces/${workspaceId}/members`, {
       method: 'POST',

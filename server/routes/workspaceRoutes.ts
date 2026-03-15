@@ -8,6 +8,7 @@ export default async function (fastify: FastifyInstance) {
   fastify.get('/', workspaceController.getUserWorkspaces);
   fastify.get('/:id/members', workspaceController.getWorkspaceMembers);
   fastify.post('/:id/members', workspaceController.addMember);
+  fastify.put('/:id', workspaceController.updateWorkspace);
   fastify.delete('/:id/members/:userId', workspaceController.removeMember);
   fastify.delete('/:id', workspaceController.deleteWorkspace);
 

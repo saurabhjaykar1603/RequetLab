@@ -50,9 +50,14 @@ const Dashboard = ({
   handleUpdateCollectionName,
   handleUpdateFolderName,
   handleUpdateRequestName,
+  handleUpdateWorkspaceName,
   handleSendRequest
-}) => (
-  <div className="app-container">
+}) => {
+  const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId);
+  const isAdmin = activeWorkspace?.role === 'admin';
+
+  return (
+    <div className="app-container">
     {/* THIN NAV BAR */}
     <div className="nav-bar">
       <div style={{display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center'}}>
@@ -91,11 +96,21 @@ const Dashboard = ({
       <div className="sidebar-header" style={{flexDirection: 'column', alignItems: 'flex-start', gap: '12px'}}>
         <div style={{display: 'flex', alignItems: 'center', gap: '8px', width: '100%'}}>
           <div className="workspace-selector" onClick={() => setModalOpen('workspace-switch')}>
-            <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1}}>
-              <Box size={16} />
-              <span style={{fontWeight: 600, fontSize: '14px'}}>{workspaces.find(w => w.id === activeWorkspaceId)?.name || 'Select Workspace'}</span>
+            <div style={{display: 'flex', alignItems: 'center', gap: '8px', flex: 1, overflow: 'hidden'}}>
+              <Box size={16} style={{ flexShrink: 0 }} />
+              {isAdmin ? (
+                <div style={{ flex: 1, overflow: 'hidden' }} onClick={e => e.stopPropagation()}>
+                  <EditableText 
+                    text={activeWorkspace?.name || 'Select Workspace'} 
+                    onSave={(newName) => handleUpdateWorkspaceName(activeWorkspaceId, newName)}
+                    style={{ fontWeight: 600, fontSize: '14px' }}
+                  />
+                </div>
+              ) : (
+                <span style={{fontWeight: 600, fontSize: '14px'}}>{activeWorkspace?.name || 'Select Workspace'}</span>
+              )}
             </div>
-            <ChevronDown size={14} />
+            <ChevronDown size={14} style={{ flexShrink: 0 }} />
           </div>
           <button className="icon-btn" onClick={() => setModalOpen('workspace')} title="New Workspace"><Plus size={18} /></button>
         </div>
@@ -268,5 +283,6 @@ const Dashboard = ({
     </div>
   </div>
 );
+};
 
 export default Dashboard;
