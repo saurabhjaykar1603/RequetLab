@@ -1,7 +1,7 @@
 import { 
   Folder, FolderOpen, Copy, Trash2, Plus, 
   ChevronRight, ChevronDown, Download, Server, 
-  Search, Box, History, Link as LucideLink, Sun, Moon
+  Search, Box, History, Link as LucideLink, Sun, Moon, Edit3
 } from 'lucide-react';
 import RequestEditor from './RequestEditor';
 import ActivityLogs from './ActivityLogs';
@@ -101,8 +101,8 @@ const Dashboard = ({
         </div>
         
         <div style={{display: 'flex', gap: '4px', width: '100%'}}>
-          <button className="btn-secondary" onClick={() => setModalOpen(activeTab === 'collections' ? 'collection' : 'environment')} style={{flex: 1, padding: '4px 8px'}}><Plus size={14} /> New</button>
-          {activeTab === 'collections' && <button className="btn-secondary" onClick={() => setModalOpen('import')} style={{flex: 1, padding: '4px 8px'}}>Import</button>}
+          <button className="btn-secondary" onClick={() => { setModalData({}); setModalOpen(activeTab === 'collections' ? 'collection' : 'environment'); }} style={{flex: 1, padding: '4px 8px'}}><Plus size={14} /> New</button>
+          {activeTab === 'collections' && <button className="btn-secondary" onClick={() => { setModalData({}); setModalOpen('import'); }} style={{flex: 1, padding: '4px 8px'}}>Import</button>}
         </div>
       </div>
 
@@ -229,11 +229,12 @@ const Dashboard = ({
             key={env.id} 
             className={`collection-header ${activeEnvId === env.id ? 'active' : ''}`}
             onClick={() => setActiveEnvId(env.id)}
+            onDoubleClick={() => { setModalData({ id: env.id, name: env.name, variables: env.variables }); setModalOpen('environment'); }}
           >
             <Server size={16} style={{marginRight: '8px', color: 'var(--text-secondary)'}}/>
             <span style={{flex: 1}}>{env.name}</span>
             <div className="item-actions">
-              <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalData({ id: env.id, name: env.name, variables: env.variables }); setModalOpen('environment'); }} title="Edit"><Copy size={14} /></button>
+              <button className="icon-btn" onClick={(e) => { e.stopPropagation(); setModalData({ id: env.id, name: env.name, variables: env.variables }); setModalOpen('environment'); }} title="Edit"><Edit3 size={14} /></button>
               <button className="icon-btn" onClick={(e) => { e.stopPropagation(); handleDeleteEnvironment(env.id); }} title="Delete"><Trash2 size={14} /></button>
             </div>
           </div>
@@ -249,6 +250,7 @@ const Dashboard = ({
         <RequestEditor 
           activeRequest={activeRequest}
           setActiveRequest={setActiveRequest}
+          setActiveTab={setActiveTab}
           environments={environments}
           activeEnvId={activeEnvId}
           setActiveEnvId={setActiveEnvId}

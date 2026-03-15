@@ -1,7 +1,7 @@
+import { Copy, Play, Save, Settings } from 'lucide-react';
 import React from 'react';
-import { Play, Copy, Save, ChevronDown } from 'lucide-react';
-import KvTable from './KvTable';
 import CustomSelect from '../common/CustomSelect';
+import KvTable from './KvTable';
 
 const RequestEditor = ({ 
   activeRequest, 
@@ -9,6 +9,7 @@ const RequestEditor = ({
   environments, 
   activeEnvId, 
   setActiveEnvId, 
+  setActiveTab,
   globals,
   handleSaveRequest, 
   handleCopyAsCurl, 
@@ -136,6 +137,16 @@ const RequestEditor = ({
               value={activeEnvId}
               onChange={setActiveEnvId}
               className="env-select-custom"
+              renderValue={(opt) => (
+                <span style={{ color: opt?.value ? 'var(--accent-color)' : 'inherit', fontWeight: opt?.value ? '600' : 'normal' }}>
+                  {opt?.label || 'No environment'}
+                </span>
+              )}
+              footerAction={{
+                label: "Manage Environments",
+                icon: Settings,
+                onClick: () => setActiveTab('environments')
+              }}
             />
             <button className="icon-btn" style={{border: '1px solid var(--border-color)', borderRadius: '4px', padding: '4px 8px'}} onClick={handleCopyAsCurl} title="Copy as cURL">
               <Copy size={14} /> cURL

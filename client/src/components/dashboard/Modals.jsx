@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, Box, Trash2, AlertTriangle, UserPlus, Users, Bell, Check } from 'lucide-react';
+import { AlertTriangle, Bell, Box, Check, Trash2, UserPlus, Users, X } from 'lucide-react';
 import CustomSelect from '../common/CustomSelect';
 
 const Modals = ({
@@ -542,7 +541,7 @@ const Modals = ({
         <div className="modal-overlay" onClick={() => setModalOpen(null)}>
           <div className="modal" style={{ maxWidth: '600px' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3>{modalData.id ? 'Edit Environment' : 'New Environment'}</h3>
+              <h3>{modalData.id ? (modalData.id === 'globals' ? 'Edit Global Variables' : 'Edit Environment') : 'New Environment'}</h3>
               <button className="icon-btn" onClick={() => setModalOpen(null)}><X size={18}/></button>
             </div>
             <form onSubmit={(e) => { 

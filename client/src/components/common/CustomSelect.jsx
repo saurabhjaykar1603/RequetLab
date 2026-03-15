@@ -8,7 +8,8 @@ const CustomSelect = ({
   placeholder = "Select an option",
   renderOption = (opt) => opt.label,
   renderValue = (opt) => opt?.label || placeholder,
-  className = ""
+  className = "",
+  footerAction = null
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -53,6 +54,21 @@ const CustomSelect = ({
           ))}
           {options.length === 0 && (
             <div className="custom-select-no-options">No options available</div>
+          )}
+          
+          {footerAction && (
+            <div className="custom-select-footer">
+              <button 
+                className="custom-select-footer-btn" 
+                onClick={() => {
+                  footerAction.onClick();
+                  setIsOpen(false);
+                }}
+              >
+                {footerAction.icon && <footerAction.icon size={12} />}
+                {footerAction.label}
+              </button>
+            </div>
           )}
         </div>
       )}
