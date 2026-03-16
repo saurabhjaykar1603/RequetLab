@@ -7,6 +7,7 @@ import Signup from './components/auth/Signup';
 import Dashboard from './components/dashboard/Dashboard';
 import Modals from './components/dashboard/Modals';
 import { generateCurl, parseCurl } from './utils/curlUtils';
+import { resolveRequestVariables } from './utils/variableUtils';
 import './index.css';
 
 // Helpers
@@ -478,7 +479,9 @@ export default function App() {
 
   const handleCopyAsCurl = () => {
     if (!activeRequest) return;
-    const curl = generateCurl(activeRequest);
+    const activeEnv = environments.find(e => e.id === activeEnvId);
+    const resolvedRequest = resolveRequestVariables(activeRequest, activeEnv, globals);
+    const curl = generateCurl(resolvedRequest);
     navigator.clipboard.writeText(curl);
     showToast({ message: 'cURL copied!', type: 'info' });
   };
@@ -694,49 +697,14 @@ export default function App() {
     setResponse(null);
     try {
       const activeEnv = environments.find(e => e.id === activeEnvId);
-      const replaceVars = (str) => {
-        if (!str || typeof str !== 'string') return str;
-        let res = str;
-
-        // Match {{variable_name}}
-        const regex = /{{(.*?)}}/g;
-        res = res.replace(regex, (match, key) => {
-          const trimmedKey = key.trim();
-          // Priority: Active Env > Globals
-          if (activeEnv && activeEnv.variables && activeEnv.variables[trimmedKey] !== undefined) {
-            return activeEnv.variables[trimmedKey];
-          }
-          if (globals[trimmedKey] !== undefined) {
-            return globals[trimmedKey];
-          }
-          return match; // Return as is if not found
-        });
-
-        return res;
-      };
-
-      const subUrl = replaceVars(activeRequest.url);
-      const subHeaders = (activeRequest.headers || []).map(h => ({ ...h, value: replaceVars(h.value) }));
-      const subParams = (activeRequest.params || []).map(p => ({ ...p, value: replaceVars(p.value) }));
-      let subBody = typeof activeRequest.body === 'string' ? replaceVars(activeRequest.body) : activeRequest.body;
-
-      if (typeof activeRequest.body === 'object' && activeRequest.body !== null) {
-        if (activeRequest.body.type === 'json' && activeRequest.body.content) {
-          subBody = { ...activeRequest.body, content: replaceVars(activeRequest.body.content) };
-        } else if (activeRequest.body.type === 'form-data' && Array.isArray(activeRequest.body.content)) {
-          subBody = {
-            ...activeRequest.body,
-            content: activeRequest.body.content.map(f => ({ ...f, value: replaceVars(f.value) }))
-          };
-        }
-      }
+      const subRequest = resolveRequestVariables(activeRequest, activeEnv, globals);
 
       const res = await api.executeRequest({
-        url: subUrl,
-        method: activeRequest.method,
-        headers: subHeaders,
-        params: subParams,
-        body: subBody
+        url: subRequest.url,
+        method: subRequest.method,
+        headers: subRequest.headers,
+        params: subRequest.params,
+        body: subRequest.body
       });
       setResponse(res);
     } catch (err) {
