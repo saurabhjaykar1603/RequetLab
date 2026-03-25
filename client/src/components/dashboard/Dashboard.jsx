@@ -84,7 +84,7 @@ const Dashboard = ({
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           <span>Theme</span>
         </div>
-        <div className="nav-item" onClick={handleLogout} title="Logout">
+        <div className="nav-item" onClick={() => handleLogout()} title="Logout">
           <LucideLink size={20} />
           <span>Logout</span>
         </div>

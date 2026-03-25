@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { api } from './api';
 import { useToast } from 'toast-ninja';
 import Login from './components/auth/Login';
@@ -17,6 +17,7 @@ const parseJSONStr = (str, fallback) => {
 
 export default function App() {
   const { showToast } = useToast();
+  const navigate = useNavigate();
   const [collections, setCollections] = useState([]);
   const [folders, setFolders] = useState([]);
   const [requests, setRequests] = useState([]);
@@ -100,6 +101,8 @@ export default function App() {
   }, [user, activeWorkspaceId]);
 
   const handleLogout = async (message = 'Logged out successfully') => {
+    const logoutMessage = typeof message === 'string' ? message : 'Logged out successfully';
+
     try {
       await api.logout();
     } catch (err) {
@@ -114,7 +117,8 @@ export default function App() {
     setFolders([]);
     setRequests([]);
     setActiveRequest(null);
-    showToast({ message, type: 'info' });
+    navigate('/login', { replace: true });
+    showToast({ message: logoutMessage, type: 'info' });
   };
 
   const handleWorkspaceChange = (id) => {
@@ -798,6 +802,7 @@ export default function App() {
           />
         </>
       ) : <Navigate to="/login" />} />
+      <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
     </Routes>
   );
 }

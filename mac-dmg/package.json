@@ -1,0 +1,71 @@
+{
+  "name": "requestlab",
+  "productName": "RequestLab",
+  "version": "1.0.0",
+  "private": true,
+  "author": "RequestLab",
+  "description": "Electron wrapper for RequestLab with macOS DMG packaging",
+  "main": "electron/main.cjs",
+  "scripts": {
+    "dev": "electron .",
+    "prepare:client": "npm --prefix ../client ci",
+    "prepare:server": "npm --prefix ../server ci --include=dev",
+    "build:web": "npm --prefix ../client run build",
+    "dist:mac": "npm run prepare:client && npm run prepare:server && npm run build:web && electron-builder --mac dmg --publish never",
+    "dist:mac:trusted": "npm run prepare:client && npm run prepare:server && npm run build:web && node electron/verify-signing-env.cjs && electron-builder --mac dmg --publish never"
+  },
+  "devDependencies": {
+    "@electron/notarize": "^2.5.0",
+    "electron": "^37.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.requestlab.desktop",
+    "productName": "RequestLab",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "electron/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../server",
+        "to": "server",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../client/dist",
+        "to": "client/dist",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../.env.sample",
+        "to": "env/.env.sample"
+      },
+      {
+        "from": "../server/.env.sample",
+        "to": "env/server.env.sample"
+      }
+    ],
+    "mac": {
+      "target": [
+        "dmg"
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "electron/entitlements.mac.plist",
+      "entitlementsInherit": "electron/entitlements.mac.inherit.plist",
+      "category": "public.app-category.developer-tools"
+    },
+    "afterSign": "electron/notarize.cjs",
+    "dmg": {
+      "artifactName": "RequestLab-${version}-${arch}.dmg"
+    }
+  }
+}
