@@ -543,17 +543,130 @@ export default function App() {
   const handleExportCollection = (collection) => {
     const colRequests = requests.filter(r => r.collectionId === collection.id);
     const colFolders = folders.filter(f => f.collectionId === collection.id);
-    const exportData = {
-      collection_name: collection.name,
-      version: "1.0",
-      format: "APIForge",
-      folders: colFolders.map(f => ({ id: f.id, name: f.name })),
-      requests: colRequests.map(r => ({
-        id: r.id, name: r.name, method: r.method, url: r.url,
-        folderId: r.folderId, headers: r.headers, params: r.params,
-        body: r.body, auth: r.auth
-      }))
+
+    const toPostmanHeaders = (headers = []) =>
+      (headers || [])
+        .filter(h => h && h.key)
+        .map(h => ({
+          key: h.key,
+          value: h.value || '',
+          description: h.description || undefined,
+          ...(h.enabled === false ? { disabled: true } : {})
+        }));
+
+    const toPostmanQuery = (params = []) =>
+      (params || [])
+        .filter(p => p && p.key)
+        .map(p => ({
+          key: p.key,
+          value: p.value || '',
+          description: p.description || undefined,
+          ...(p.enabled === false ? { disabled: true } : {})
+        }));
+
+    const toPostmanUrl = (rawUrl = '', params = []) => {
+      const raw = rawUrl || '';
+      const query = toPostmanQuery(params);
+      const base = { raw, ...(query.length > 0 ? { query } : {}) };
+      if (!raw) return base;
+
+      // Handle {{var}}/path style URLs commonly used in collections.
+      const varMatch = raw.match(/^(\{\{[^}]+\}\})(\/[^?#]*)?(?:\?[^#]*)?(?:#.*)?$/);
+      if (varMatch) {
+        const path = (varMatch[2] || '')
+          .split('/')
+          .filter(Boolean);
+        return {
+          ...base,
+          host: [varMatch[1]],
+          ...(path.length > 0 ? { path } : {})
+        };
+      }
+
+      try {
+        const parsed = new URL(raw);
+        const path = parsed.pathname.split('/').filter(Boolean);
+        return {
+          ...base,
+          ...(parsed.protocol ? { protocol: parsed.protocol.replace(':', '') } : {}),
+          ...(parsed.hostname ? { host: parsed.hostname.split('.') } : {}),
+          ...(parsed.port ? { port: parsed.port } : {}),
+          ...(path.length > 0 ? { path } : {})
+        };
+      } catch {
+        // Fallback for non-standard or relative URLs.
+        const [withoutQuery] = raw.split('?');
+        const path = withoutQuery.split('/').filter(Boolean);
+        return {
+          ...base,
+          ...(path.length > 0 ? { path } : {})
+        };
+      }
     };
+
+    const toPostmanBody = (body) => {
+      if (!body || body.type === 'none') return undefined;
+
+      if (body.type === 'json') {
+        return {
+          mode: 'raw',
+          raw: body.content || '',
+          options: { raw: { language: 'json' } }
+        };
+      }
+
+      if (body.type === 'form-data') {
+        return {
+          mode: 'formdata',
+          formdata: (Array.isArray(body.content) ? body.content : [])
+            .filter(f => f && f.key)
+            .map(f => ({
+              key: f.key,
+              value: f.value || '',
+              type: 'text',
+              description: f.description || undefined,
+              ...(f.enabled === false ? { disabled: true } : {})
+            }))
+        };
+      }
+
+      return undefined;
+    };
+
+    const toPostmanRequestItem = (request) => {
+      const postmanBody = toPostmanBody(request.body);
+
+      return {
+        name: request.name,
+        request: {
+          method: request.method || 'GET',
+          header: toPostmanHeaders(request.headers),
+          url: toPostmanUrl(request.url, request.params),
+          ...(postmanBody ? { body: postmanBody } : {})
+        }
+      };
+    };
+
+    const folderItems = colFolders.map(folder => ({
+      name: folder.name,
+      item: colRequests
+        .filter(r => r.folderId === folder.id)
+        .map(toPostmanRequestItem)
+    }));
+
+    const rootRequests = colRequests
+      .filter(r => !r.folderId)
+      .map(toPostmanRequestItem);
+
+    const exportData = {
+      info: {
+        name: collection.name,
+        _postman_id: collection.id,
+        schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json'
+      },
+      item: [...folderItems, ...rootRequests]
+    };
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
