@@ -57,6 +57,7 @@
       "target": [
         "dmg"
       ],
+      "icon": "electron/assets/requestlab.png",
       "hardenedRuntime": true,
       "gatekeeperAssess": false,
       "entitlements": "electron/entitlements.mac.plist",
@@ -65,6 +66,7 @@
     },
     "afterSign": "electron/notarize.cjs",
     "dmg": {
+      "icon": "electron/assets/requestlab.png",
       "artifactName": "RequestLab-${version}-${arch}.dmg"
     }
   }

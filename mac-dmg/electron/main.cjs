@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog } = require('electron');
+const { app, BrowserWindow, dialog, nativeImage } = require('electron');
 const { spawn } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -154,6 +154,11 @@ function startServer() {
 }
 
 function createMainWindow() {
+  const dockIconPath = path.join(__dirname, 'assets', 'requestlab.png');
+  if (process.platform === 'darwin' && fs.existsSync(dockIconPath)) {
+    app.dock.setIcon(nativeImage.createFromPath(dockIconPath));
+  }
+
   mainWindow = new BrowserWindow({
     title: 'RequestLab',
     width: 1440,

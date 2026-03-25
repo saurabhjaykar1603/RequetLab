@@ -28,6 +28,13 @@ Generated artifact:
 
 - `mac-dmg/dist/RequestLab-1.0.0-<arch>.dmg`
 
+## App Logo/Icon
+
+- Desktop app + DMG icon now use:
+  - `mac-dmg/electron/assets/requestlab.png`
+- Source copied from:
+  - `client/public/logo.png`
+
 ## Trusted Build (Signed + Notarized)
 
 Use this when you want recipients to install without Gatekeeper "damaged app" warnings.
