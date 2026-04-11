@@ -5,7 +5,7 @@ This folder contains a standalone Electron wrapper that runs the existing Reques
 ## Important
 
 - Existing source code in `client/` and `server/` is not modified.
-- Electron app starts the existing `server/app.ts` internally and loads the same UI at `http://127.0.0.1:3001`.
+- Electron app starts the existing `server/app.ts` internally and loads the same UI at `http://127.0.0.1:5000`.
 - PostgreSQL still needs to be available (same requirement as your current app).
 
 ## Local Run (Electron)
@@ -90,8 +90,7 @@ rm -f "$HOME/Library/Application Support/RequestLab/runtime/.env"
 
 ## Port Override
 
-By default, the desktop wrapper uses port `3001`.
-If needed, override it explicitly:
+By default, the desktop wrapper uses port `5000`. You can override this by setting the `REQUESTLAB_PORT` environment variable.v
 
 ```bash
 REQUESTLAB_PORT=3002 npm run dev

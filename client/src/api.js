@@ -1,4 +1,4 @@
-const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 const getHeaders = () => {
   const headers = {};
@@ -53,6 +53,9 @@ export const api = {
     return request(`${BASE_URL}/auth/logout`, {
       method: 'POST'
     });
+  },
+  getMe: async () => {
+    return request(`${BASE_URL}/auth/me`);
   },
 
   // Workspaces

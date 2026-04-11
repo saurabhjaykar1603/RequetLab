@@ -52,10 +52,29 @@ const initializeDbInternal = async () => {
       id TEXT PRIMARY KEY,
       name TEXT NOT NULL,
       email TEXT NOT NULL UNIQUE,
-      password TEXT NOT NULL,
+      password TEXT, -- Nullable for Google users
+      "googleId" TEXT UNIQUE,
+      "avatarUrl" TEXT,
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    // Migration: Add googleId and handle password nullability if needed
+    await client.query(`
+      DO $$ 
+      BEGIN 
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='googleId') THEN
+          ALTER TABLE users ADD COLUMN "googleId" TEXT UNIQUE;
+        END IF;
+        
+        -- Make password nullable
+        ALTER TABLE users ALTER COLUMN password DROP NOT NULL;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='avatarUrl') THEN
+          ALTER TABLE users ADD COLUMN "avatarUrl" TEXT;
+        END IF;
+      END $$;
+    `);
 
     // Workspaces Table
     await client.query(`CREATE TABLE IF NOT EXISTS workspaces (

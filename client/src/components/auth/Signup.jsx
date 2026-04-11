@@ -73,6 +73,31 @@ export default function Signup({ onSignupSuccess }) {
             {isLoading ? 'Creating Account...' : 'Sign Up'}
           </button>
         </form>
+
+        <div className="auth-divider" style={{ display: 'flex', alignItems: 'center', margin: '24px 0', color: 'var(--text-secondary)', fontSize: '14px' }}>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+          <span style={{ padding: '0 12px' }}>OR</span>
+          <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.1)' }}></div>
+        </div>
+
+        <button 
+          onClick={() => window.location.href = '/api/auth/google'} 
+          className="btn-secondary" 
+          style={{ 
+            width: '100%', 
+            display: 'flex', 
+            alignItems: 'center', 
+            justifyContent: 'center', 
+            gap: '12px',
+            background: 'white',
+            color: '#1a1a1a',
+            border: 'none',
+            fontWeight: '600'
+          }}
+        >
+          <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="Google" style={{ width: '20px', height: '20px' }} />
+          Continue with Google
+        </button>
         
         <p style={{ marginTop: '24px', fontSize: '14px', color: 'var(--text-secondary)' }}>
           Already have an account? <Link to="/login" style={{ color: 'var(--accent-color)', textDecoration: 'none', fontWeight: '500' }}>Log In</Link>

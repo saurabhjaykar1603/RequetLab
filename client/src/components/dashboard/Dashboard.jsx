@@ -77,7 +77,15 @@ const Dashboard = ({
       <div style={{marginTop: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', width: '100%', alignItems: 'center'}}>
          {user && (
            <div className="user-profile" title={user.name}>
-             {user.name.charAt(0).toUpperCase()}
+             {user.avatarUrl ? (
+               <img 
+                 src={user.avatarUrl} 
+                 alt={user.name} 
+                 style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} 
+               />
+             ) : (
+               user.name.charAt(0).toUpperCase()
+             )}
            </div>
          )}
         <div className="nav-item" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>

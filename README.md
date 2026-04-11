@@ -47,7 +47,7 @@ cd server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:5173` and the backend at `http://localhost:3001`.
+The frontend will be available at `http://localhost:3000` and the backend at `http://localhost:5000`.
 
 ## Production & Hosting
 
@@ -67,7 +67,7 @@ cd server
 npm run prod
 ```
 
-The entire application will be accessible at `http://localhost:3001` (or your configured `PORT`).
+The entire application will be accessible at `http://localhost:5000` (or your configured `PORT`).
 
 ## Running with Docker
 
@@ -81,7 +81,7 @@ You can run the entire stack (client, server, and database) using Docker Compose
    ```
 
 2. **Access the App**:
-   The application will be available at `http://localhost:3001`.
+   The application will be available at `http://localhost:5000`.
 
 *Note: The database state is persisted in a Docker volume named `postgres_data`.*
 

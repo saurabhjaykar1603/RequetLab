@@ -11,6 +11,7 @@ import { initializeDb } from './db.ts';
 import envWatcher from './plugins/env-watcher.ts';
 import requestLogger from './plugins/request-logger.ts';
 import auth from './plugins/auth.ts';
+import oauth from './plugins/oauth.ts';
 
 // Routes
 import authRoutes from './routes/authRoutes.ts';
@@ -47,7 +48,7 @@ export const buildApp = (options: BuildAppOptions = {}): FastifyInstance => {
   fastify.register(import('@fastify/cookie'));
 
   fastify.register(cors, {
-    origin: true,
+    origin: ['http://localhost:3000', 'http://localhost:5000'],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     credentials: true
   });
@@ -69,6 +70,7 @@ export const buildApp = (options: BuildAppOptions = {}): FastifyInstance => {
   }
 
   fastify.register(auth);
+  fastify.register(oauth);
 
   // Register Routes
   fastify.register(authRoutes, { prefix: '/api/auth' });
@@ -103,7 +105,7 @@ export const startServer = async () => {
     await initializeDb();
 
     const fastify = buildApp();
-    const PORT = parseInt(process.env.PORT || '3001', 10);
+    const PORT = parseInt(process.env.PORT || '5000', 10);
     await fastify.listen({ port: PORT, host: '0.0.0.0' });
     logger.info(`Server running on port ${PORT}`);
   } catch (err) {

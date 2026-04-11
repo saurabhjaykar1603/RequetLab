@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 
-const SERVER_PORT = String(process.env.REQUESTLAB_PORT || 3001);
+const SERVER_PORT = String(process.env.REQUESTLAB_PORT || 5000);
 const SERVER_URL = `http://localhost:${SERVER_PORT}`;
 
 let mainWindow = null;

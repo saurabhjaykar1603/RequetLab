@@ -41,14 +41,14 @@ describe('crud repositories', () => {
   it('creates a user and logs signup activity', async () => {
     uuidMock.mockReturnValue('user-1');
     runQueryMock.mockResolvedValue({
-      rows: [{ id: 'user-1', name: 'Ada', email: 'ada@example.com' }],
+      rows: [{ id: 'user-1', name: 'Ada', email: 'ada@example.com', googleId: undefined, avatarUrl: undefined }],
     });
 
     const user = await authRepository.createUser('Ada', 'ada@example.com', 'hashed');
 
     expect(runQueryMock).toHaveBeenCalledWith(
-      'INSERT INTO users (id, name, email, password) VALUES ($1, $2, $3, $4) RETURNING id, name, email',
-      ['user-1', 'Ada', 'ada@example.com', 'hashed']
+      'INSERT INTO users (id, name, email, password, "googleId", "avatarUrl") VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, "googleId", "avatarUrl"',
+      ['user-1', 'Ada', 'ada@example.com', 'hashed', undefined, undefined]
     );
     expect(logActivityMock).toHaveBeenCalledWith(
       'user-1',
@@ -59,7 +59,7 @@ describe('crud repositories', () => {
       'Ada',
       'New user registered: ada@example.com'
     );
-    expect(user).toEqual({ id: 'user-1', name: 'Ada', email: 'ada@example.com' });
+    expect(user).toEqual({ id: 'user-1', name: 'Ada', email: 'ada@example.com', googleId: undefined, avatarUrl: undefined });
   });
 
   it('creates a collection and logs workspace activity', async () => {
