@@ -80,7 +80,8 @@ describe('workspace routes', () => {
     expect(workspaceRepository.createWorkspace).toHaveBeenCalledWith(
       'My Workspace',
       'user-1',
-      'personal'
+      'personal',
+      'free'
     );
   });
 

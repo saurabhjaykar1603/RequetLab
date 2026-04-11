@@ -6,14 +6,12 @@ import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import Dashboard from './components/dashboard/Dashboard';
 import Modals from './components/dashboard/Modals';
+import HomePage from './components/marketing/HomePage';
+import PricingPage from './components/marketing/PricingPage';
+import ProfilePage from './components/settings/ProfilePage';
 import { generateCurl, parseCurl } from './utils/curlUtils';
 import { resolveRequestVariables } from './utils/variableUtils';
 import './index.css';
-
-// Helpers
-const parseJSONStr = (str, fallback) => {
-  try { return JSON.parse(str); } catch (e) { return fallback; }
-};
 
 export default function App() {
   const { showToast } = useToast();
@@ -155,7 +153,11 @@ export default function App() {
   const handleCreateWorkspace = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.createWorkspace(modalData.workspaceName, modalData.workspaceType || 'personal');
+      const res = await api.createWorkspace(
+        modalData.workspaceName,
+        modalData.workspaceType || 'personal',
+        modalData.workspacePlan || 'free'
+      );
       if (res.error) throw new Error(res.error);
       setModalOpen(null);
       setModalData({});
@@ -859,9 +861,12 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={!user ? <Login onLoginSuccess={setUser} /> : <Navigate to="/" />} />
-      <Route path="/signup" element={!user ? <Signup onSignupSuccess={setUser} /> : <Navigate to="/" />} />
-      <Route path="/" element={user ? (
+      <Route path="/" element={<HomePage user={user} />} />
+      <Route path="/pricing" element={<PricingPage user={user} />} />
+      <Route path="/login" element={!user ? <Login onLoginSuccess={setUser} /> : <Navigate to="/app" />} />
+      <Route path="/signup" element={!user ? <Signup onSignupSuccess={setUser} /> : <Navigate to="/app" />} />
+      <Route path="/profile" element={user ? <ProfilePage user={user} onUserChange={setUser} /> : <Navigate to="/login" />} />
+      <Route path="/app" element={user ? (
         <>
           <Dashboard
             user={user}
@@ -900,6 +905,9 @@ export default function App() {
             theme={theme}
             setTheme={setTheme}
             handleLogout={handleLogout}
+            goToHome={() => navigate('/')}
+            goToPricing={() => navigate('/pricing')}
+            goToProfile={() => navigate('/profile')}
             handleSaveRequest={handleSaveRequest}
             handleCopyAsCurl={handleCopyAsCurl}
             handleUrlPaste={handleUrlPaste}
@@ -941,7 +949,7 @@ export default function App() {
           />
         </>
       ) : <Navigate to="/login" />} />
-      <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={user ? '/app' : '/'} replace />} />
     </Routes>
   );
 }

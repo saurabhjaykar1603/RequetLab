@@ -3,6 +3,7 @@ export interface Workspace {
   name: string;
   ownerId: string;
   type: 'personal' | 'team';
+  plan?: 'free' | 'business';
   createdAt?: Date;
   updatedAt?: Date;
 }

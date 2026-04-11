@@ -55,6 +55,9 @@ const initializeDbInternal = async () => {
       password TEXT, -- Nullable for Google users
       "googleId" TEXT UNIQUE,
       "avatarUrl" TEXT,
+      "jobTitle" TEXT,
+      company TEXT,
+      bio TEXT,
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
@@ -73,6 +76,18 @@ const initializeDbInternal = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='avatarUrl') THEN
           ALTER TABLE users ADD COLUMN "avatarUrl" TEXT;
         END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='jobTitle') THEN
+          ALTER TABLE users ADD COLUMN "jobTitle" TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='company') THEN
+          ALTER TABLE users ADD COLUMN company TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='bio') THEN
+          ALTER TABLE users ADD COLUMN bio TEXT;
+        END IF;
       END $$;
     `);
 
@@ -82,9 +97,19 @@ const initializeDbInternal = async () => {
       name TEXT NOT NULL,
       "ownerId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       type TEXT DEFAULT 'personal', -- 'personal' or 'team'
+      plan TEXT DEFAULT 'free', -- 'free' or 'business'
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='workspaces' AND column_name='plan') THEN
+          ALTER TABLE workspaces ADD COLUMN plan TEXT DEFAULT 'free';
+        END IF;
+      END $$;
+    `);
 
     // Workspace Members Table (for team workspaces)
     await client.query(`CREATE TABLE IF NOT EXISTS workspace_members (
@@ -175,6 +200,24 @@ const initializeDbInternal = async () => {
       UNIQUE("workspaceId", "inviteeId", "status") -- Prevent duplicate pending invites
     )`);
 
+    // Organizations Table
+    await client.query(`CREATE TABLE IF NOT EXISTS organizations (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      "ownerId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      plan TEXT DEFAULT 'free', -- 'free' or 'business'
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )`);
+
+    // Organization Members Table
+    await client.query(`CREATE TABLE IF NOT EXISTS organization_members (
+      "organizationId" TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
+      "userId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      role TEXT DEFAULT 'member', -- 'admin' or 'member'
+      PRIMARY KEY ("organizationId", "userId")
+    )`);
+
     // Activity Logs Table
     await client.query(`CREATE TABLE IF NOT EXISTS activity_logs (
       id TEXT PRIMARY KEY,
@@ -191,6 +234,7 @@ const initializeDbInternal = async () => {
     // Create indexes for activity logs to ensure performance as the table grows
     await client.query('CREATE INDEX IF NOT EXISTS idx_activity_logs_workspace_id ON activity_logs ("workspaceId")');
     await client.query('CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs ("createdAt")');
+    await client.query('CREATE INDEX IF NOT EXISTS idx_org_members_user_id ON organization_members ("userId")');
 
     await client.query('COMMIT');
     console.log('PostgreSQL database and tables initialized.');

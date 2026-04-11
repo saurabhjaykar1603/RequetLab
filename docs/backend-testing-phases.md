@@ -26,6 +26,7 @@ Already implemented:
 - `server/server.ts` owns process startup
 - root `npm run check` runs backend-safe validation
 - first-pass route tests cover auth, workspaces, collections, requests, environments, activity logs, and proxy behavior
+- first-pass route tests now also cover organization and profile-update flows
 - first-pass repository tests cover core SQL orchestration without a real database
 
 Big remaining gap:

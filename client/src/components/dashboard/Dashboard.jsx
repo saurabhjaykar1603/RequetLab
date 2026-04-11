@@ -1,7 +1,7 @@
 import { 
   Folder, FolderOpen, Copy, Trash2, Plus, 
   ChevronRight, ChevronDown, Download, Server, 
-  Search, Box, History, Link as LucideLink, Sun, Moon, Edit3
+  Search, Box, History, Link as LucideLink, Sun, Moon, Edit3, House, UserRoundCog, BadgeDollarSign
 } from 'lucide-react';
 import RequestEditor from './RequestEditor';
 import ActivityLogs from './ActivityLogs';
@@ -40,6 +40,9 @@ const Dashboard = ({
   theme,
   setTheme,
   handleLogout,
+  goToHome,
+  goToPricing,
+  goToProfile,
   handleSaveRequest,
   handleCopyAsCurl,
   handleUrlPaste,
@@ -88,6 +91,18 @@ const Dashboard = ({
              )}
            </div>
          )}
+        <div className="nav-item" onClick={goToHome}>
+          <House size={20} />
+          <span>Home</span>
+        </div>
+        <div className="nav-item" onClick={goToPricing}>
+          <BadgeDollarSign size={20} />
+          <span>Pricing</span>
+        </div>
+        <div className="nav-item" onClick={goToProfile}>
+          <UserRoundCog size={20} />
+          <span>Profile</span>
+        </div>
         <div className="nav-item" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
           <span>Theme</span>

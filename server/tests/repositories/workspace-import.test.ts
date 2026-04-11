@@ -50,8 +50,8 @@ describe('workspace and import repositories', () => {
 
     expect(runQueryMock).toHaveBeenNthCalledWith(
       1,
-      'INSERT INTO workspaces (id, name, "ownerId", type) VALUES ($1, $2, $3, $4) RETURNING *',
-      ['ws-1', 'Platform', 'user-1', 'team']
+      'INSERT INTO workspaces (id, name, "ownerId", type, plan) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      ['ws-1', 'Platform', 'user-1', 'team', 'free']
     );
     expect(runQueryMock).toHaveBeenNthCalledWith(
       2,

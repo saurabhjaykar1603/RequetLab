@@ -6,5 +6,6 @@ export default async function (fastify: FastifyInstance) {
   fastify.post('/login', authController.login);
   fastify.post('/logout', { preHandler: [(fastify as any).authenticate] }, authController.logout);
   fastify.get('/me', { preHandler: [(fastify as any).authenticate] }, authController.getMe);
+  fastify.put('/profile', { preHandler: [(fastify as any).authenticate] }, authController.updateProfile);
   fastify.get('/google/callback', authController.googleCallback);
 }

@@ -4,7 +4,7 @@ This document describes the current backend in `server/` so you can maintain it,
 
 ## Overview
 
-The backend is a Fastify + TypeScript server with PostgreSQL persistence. It exposes authentication, workspace management, collections, folders, requests, environments, proxy execution, and activity logs.
+The backend is a Fastify + TypeScript server with PostgreSQL persistence. It exposes authentication, profile management, workspace management, organization/team management with pricing plans, collections, folders, requests, environments, proxy execution, and activity logs.
 
 At runtime the server also serves the built React app from `client/dist`, so production can run as a single process.
 
@@ -154,6 +154,8 @@ Current tables:
 - `requests`
 - `environments`
 - `workspace_invitations`
+- `organizations`
+- `organization_members`
 - `activity_logs`
 
 Important note:
@@ -168,8 +170,9 @@ Flow:
 
 1. `POST /api/auth/signup` creates a user and sets a `token` cookie.
 2. `POST /api/auth/login` validates credentials and sets a `token` cookie.
-3. Protected routes use `fastify.authenticate`, which verifies the JWT from `request.cookies.token`.
-4. `POST /api/auth/logout` clears the `token` cookie.
+3. `PUT /api/auth/profile` updates current user profile details.
+4. Protected routes use `fastify.authenticate`, which verifies the JWT from `request.cookies.token`.
+5. `POST /api/auth/logout` clears the `token` cookie.
 
 Cookie settings:
 
@@ -199,6 +202,8 @@ Without a valid workspace context, some routes return all rows, some return empt
 - `POST /api/auth/signup`
 - `POST /api/auth/login`
 - `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `PUT /api/auth/profile`
 
 ### Workspaces
 
@@ -211,6 +216,18 @@ Without a valid workspace context, some routes return all rows, some return empt
 - `DELETE /api/workspaces/:id`
 - `GET /api/workspaces/invitations`
 - `POST /api/workspaces/invitations/:id/respond`
+
+Workspace note:
+
+- `POST /api/workspaces` supports `plan` (`free` or `business`) in addition to `type` (`personal` or `team`)
+
+### Organizations
+
+- `POST /api/organizations`
+- `GET /api/organizations`
+- `GET /api/organizations/:id/members`
+- `POST /api/organizations/:id/members`
+- `PATCH /api/organizations/:id/plan`
 
 ### Collections
 
@@ -271,8 +288,10 @@ The repositories log most important mutations through `activityRepository.logAct
 Current event coverage includes:
 
 - user signup, login, logout
+- user profile updates
 - workspace create, update, delete
 - workspace invite, accept, reject, remove member
+- organization create and plan update
 - collection create, update, delete
 - folder create, update, delete
 - request create, update, delete
@@ -331,7 +350,7 @@ Current measured baseline after this setup:
 
 The phased plan lives here:
 
-- [docs/backend-testing-phases.md](/Users/saurabh/Desktop/RequetLab/docs/backend-testing-phases.md)
+- [docs/backend-testing-phases.md](/Users/sj/Desktop/RequestLab/docs/backend-testing-phases.md)
 
 ## Husky Workflow
 

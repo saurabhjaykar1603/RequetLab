@@ -19,7 +19,7 @@ export default function Login({ onLoginSuccess }) {
       
       localStorage.setItem('user', JSON.stringify(res.user));
       onLoginSuccess(res.user);
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError(err.message || 'Failed to login');
     } finally {

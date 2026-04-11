@@ -19,7 +19,7 @@ export default function Signup({ onSignupSuccess }) {
       
       localStorage.setItem('user', JSON.stringify(res.user));
       onSignupSuccess(res.user);
-      navigate('/');
+      navigate('/app');
     } catch (err) {
       setError(err.message || 'Failed to sign up');
     } finally {

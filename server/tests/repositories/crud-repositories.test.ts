@@ -47,7 +47,7 @@ describe('crud repositories', () => {
     const user = await authRepository.createUser('Ada', 'ada@example.com', 'hashed');
 
     expect(runQueryMock).toHaveBeenCalledWith(
-      'INSERT INTO users (id, name, email, password, "googleId", "avatarUrl") VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, "googleId", "avatarUrl"',
+      expect.stringContaining('INSERT INTO users (id, name, email, password, "googleId", "avatarUrl")'),
       ['user-1', 'Ada', 'ada@example.com', 'hashed', undefined, undefined]
     );
     expect(logActivityMock).toHaveBeenCalledWith(

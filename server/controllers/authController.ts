@@ -117,6 +117,49 @@ export const getMe = async (request: FastifyRequest, reply: FastifyReply) => {
   }
 };
 
+export const updateProfile = async (
+  request: FastifyRequest<{
+    Body: {
+      name: string;
+      jobTitle?: string;
+      company?: string;
+      bio?: string;
+      avatarUrl?: string;
+    };
+  }>,
+  reply: FastifyReply
+) => {
+  try {
+    const userId = (request as any).user?.id;
+    if (!userId) {
+      return reply.status(401).send({ error: 'Unauthorized' });
+    }
+
+    const { name, jobTitle, company, bio, avatarUrl } = request.body || {};
+    if (!name || !name.trim()) {
+      return reply.status(400).send({ error: 'Name is required' });
+    }
+
+    const updatedUser = await authRepository.updateUserProfile(userId, {
+      name: name.trim(),
+      jobTitle: jobTitle?.trim() || null,
+      company: company?.trim() || null,
+      bio: bio?.trim() || null,
+      avatarUrl: avatarUrl?.trim() || null,
+    });
+
+    if (!updatedUser) {
+      return reply.status(404).send({ error: 'User not found' });
+    }
+
+    await logActivity(userId, undefined, 'UPDATE', 'USER', userId, updatedUser.name, 'Updated profile details');
+
+    return reply.send({ user: updatedUser });
+  } catch (error: any) {
+    return reply.status(500).send({ error: error.message });
+  }
+};
+
 export const googleCallback = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const fastify = request.server as any;
