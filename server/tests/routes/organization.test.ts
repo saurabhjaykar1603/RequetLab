@@ -4,6 +4,7 @@ import { createAuthCookie } from '../helpers/auth.ts';
 
 vi.mock('../../repositories/organizationRepository.ts', () => ({
   addMemberToOrganization: vi.fn(),
+  cleanupExtraOrganizationsForOwner: vi.fn(),
   countOrganizationMembers: vi.fn(),
   createOrganization: vi.fn(),
   findOrganizationById: vi.fn(),
@@ -43,6 +44,10 @@ describe('organization routes', () => {
       if (plan === 'business') return 25;
       return 3;
     });
+    vi.mocked(organizationRepository.cleanupExtraOrganizationsForOwner).mockResolvedValue({
+      keptOrganizationId: undefined,
+      deletedOrganizationIds: [],
+    } as any);
     vi.mocked(organizationRepository.findOrganizationByOwnerId).mockResolvedValue(undefined as any);
   });
 
@@ -57,6 +62,30 @@ describe('organization routes', () => {
     });
 
     expect(response.statusCode).toBe(401);
+  });
+
+  it('cleans up duplicate owned organizations before listing', async () => {
+    vi.mocked(organizationRepository.getUserOrganizations).mockResolvedValue([
+      {
+        id: 'org-1',
+        ownerId: 'user-1',
+        name: 'Alpha Org',
+        plan: 'free',
+        role: 'admin',
+        memberCount: 1,
+      },
+    ] as any);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/api/organizations',
+      headers: {
+        cookie: createAuthCookie(),
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(organizationRepository.cleanupExtraOrganizationsForOwner).toHaveBeenCalledWith('user-1');
   });
 
   it('creates an organization on the selected plan', async () => {

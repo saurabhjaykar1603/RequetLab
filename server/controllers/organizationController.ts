@@ -19,6 +19,8 @@ export const createOrganization = async (
       return reply.status(400).send({ error: 'Organization name is required' });
     }
 
+    await organizationRepository.cleanupExtraOrganizationsForOwner(userId);
+
     const existingOwnedOrganization = await organizationRepository.findOrganizationByOwnerId(userId);
     if (existingOwnedOrganization) {
       return reply.status(400).send({
@@ -43,6 +45,7 @@ export const createOrganization = async (
 export const getUserOrganizations = async (request: FastifyRequest, reply: FastifyReply) => {
   try {
     const userId = (request as any).user.id as string;
+    await organizationRepository.cleanupExtraOrganizationsForOwner(userId);
     const organizations = await organizationRepository.getUserOrganizations(userId);
 
     return organizations.map((organization) => ({

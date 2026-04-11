@@ -110,6 +110,7 @@ const initializeDbInternal = async () => {
         END IF;
       END $$;
     `);
+    await client.query(`UPDATE workspaces SET plan = 'free' WHERE plan IS NULL OR plan = '' OR plan NOT IN ('free', 'business')`);
 
     // Workspace Members Table (for team workspaces)
     await client.query(`CREATE TABLE IF NOT EXISTS workspace_members (
@@ -209,6 +210,7 @@ const initializeDbInternal = async () => {
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+    await client.query(`UPDATE organizations SET plan = 'free' WHERE plan IS NULL OR plan = '' OR plan NOT IN ('free', 'business')`);
 
     // Organization Members Table
     await client.query(`CREATE TABLE IF NOT EXISTS organization_members (

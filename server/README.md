@@ -232,6 +232,8 @@ Workspace note:
 Organization note:
 
 - each owner account can create only one organization
+- organization plan defaults to `free` and can be changed to `business`
+- duplicate historical organizations for the same owner are auto-cleaned (latest kept)
 
 ### Collections
 

@@ -69,9 +69,14 @@ export default function ProfilePage({ user, onUserChange }) {
       }
 
       if (Array.isArray(orgRes)) {
-        setOrganizations(orgRes);
-        if (orgRes.length > 0) {
-          const defaultOrganization = orgRes.find((organization) => organization.ownerId === user.id) || orgRes[0];
+        const normalizedOrganizations = orgRes.map((organization) => ({
+          ...organization,
+          plan: organization.plan || 'free',
+        }));
+        setOrganizations(normalizedOrganizations);
+        if (normalizedOrganizations.length > 0) {
+          const defaultOrganization =
+            normalizedOrganizations.find((organization) => organization.ownerId === user.id) || normalizedOrganizations[0];
           setSelectedOrgId((prev) => prev || defaultOrganization.id);
         }
       }
@@ -291,7 +296,7 @@ export default function ProfilePage({ user, onUserChange }) {
               <Building2 size={14} /> Team Management
             </span>
           </div>
-          <p>Create one organization, select a plan, and assign users by email.</p>
+          <p>Create one organization, default plan is Free, and switch to Business anytime.</p>
 
           <form onSubmit={handleCreateOrganization} className="settings-inline-form">
             <div className="form-group">
@@ -357,7 +362,7 @@ export default function ProfilePage({ user, onUserChange }) {
                 </div>
                 <div className="organization-plan-controls">
                   <select
-                    value={selectedOrganization.plan}
+                    value={selectedOrganization.plan || 'free'}
                     onChange={(event) => handlePlanUpdate(selectedOrganization.id, event.target.value)}
                   >
                     {planOptions.map((option) => (

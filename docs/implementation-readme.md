@@ -103,4 +103,6 @@ Workspaces:
 - Organization member assignment requires existing user email.
 - Organization seat limits are enforced at API layer.
 - Only one organization can be created per owner account.
+- If an owner already has duplicate organizations from older data, extras are auto-removed and one latest organization is kept.
+- Organization plan defaults to `free` and can be switched to `business` from profile settings.
 - No Stripe/payment workflow is required for this release.

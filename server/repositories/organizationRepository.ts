@@ -24,8 +24,13 @@ export const findOrganizationById = async (id: string): Promise<Organization | u
 };
 
 export const findOrganizationByOwnerId = async (ownerId: string): Promise<Organization | undefined> => {
-  const sql = 'SELECT * FROM organizations WHERE "ownerId" = $1 ORDER BY "createdAt" ASC LIMIT 1';
+  const sql = 'SELECT * FROM organizations WHERE "ownerId" = $1 ORDER BY "createdAt" DESC LIMIT 1';
   return await getSingleQuery<Organization>(sql, [ownerId]);
+};
+
+export const getOrganizationsByOwnerId = async (ownerId: string): Promise<Organization[]> => {
+  const sql = 'SELECT * FROM organizations WHERE "ownerId" = $1 ORDER BY "createdAt" DESC';
+  return await getQuery<Organization>(sql, [ownerId]);
 };
 
 export const getUserOrganizations = async (userId: string): Promise<Array<Organization & { role: string; memberCount: number }>> => {
@@ -110,6 +115,40 @@ export const updateOrganizationPlan = async (
   return updated;
 };
 
-export const getPlanSeatLimit = (plan: OrganizationPlan): number => {
-  return ORGANIZATION_PLAN_LIMITS[plan];
+export const cleanupExtraOrganizationsForOwner = async (
+  ownerId: string
+): Promise<{ keptOrganizationId?: string; deletedOrganizationIds: string[] }> => {
+  const ownedOrganizations = await getOrganizationsByOwnerId(ownerId);
+  if (ownedOrganizations.length <= 1) {
+    return {
+      keptOrganizationId: ownedOrganizations[0]?.id,
+      deletedOrganizationIds: [],
+    };
+  }
+
+  const [organizationToKeep, ...organizationsToDelete] = ownedOrganizations;
+  const deletedOrganizationIds: string[] = [];
+
+  for (const organization of organizationsToDelete) {
+    await runQuery('DELETE FROM organizations WHERE id = $1', [organization.id]);
+    deletedOrganizationIds.push(organization.id);
+    await logActivity(
+      ownerId,
+      undefined,
+      'DELETE',
+      'ORGANIZATION',
+      organization.id,
+      organization.name,
+      'Duplicate organization removed automatically to enforce one organization per owner'
+    );
+  }
+
+  return {
+    keptOrganizationId: organizationToKeep.id,
+    deletedOrganizationIds,
+  };
+};
+
+export const getPlanSeatLimit = (plan: OrganizationPlan | string | null | undefined): number => {
+  return plan === 'business' ? ORGANIZATION_PLAN_LIMITS.business : ORGANIZATION_PLAN_LIMITS.free;
 };
