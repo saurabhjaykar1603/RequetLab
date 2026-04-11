@@ -61,6 +61,7 @@ export default function App() {
   const [activeRequest, setActiveRequestState] = useState(null);
   const [activeRequestId, setActiveRequestId] = useState(null);
   const [requestDrafts, setRequestDrafts] = useState({});
+  const [requestsHydrated, setRequestsHydrated] = useState(false);
   const [activeEnvId, setActiveEnvId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -101,6 +102,7 @@ export default function App() {
 
   useEffect(() => {
     skipNextWorkspacePersistRef.current = true;
+    setRequestsHydrated(false);
     const savedUi = readUiState();
     const workspaceUi = activeWorkspaceId ? savedUi.workspaces?.[activeWorkspaceId] : null;
 
@@ -115,6 +117,9 @@ export default function App() {
 
   useEffect(() => {
     if (!activeRequestId) {
+      return;
+    }
+    if (!requestsHydrated) {
       return;
     }
 
@@ -145,7 +150,7 @@ export default function App() {
       const candidate = mergedFromDraft || requestFromList;
       return candidate;
     });
-  }, [requests, activeRequestId]);
+  }, [requests, activeRequestId, requestsHydrated]);
 
   useEffect(() => {
     if (!activeRequest?.id) {
@@ -257,9 +262,14 @@ export default function App() {
         setFolders(flds || []);
         setRequests(reqs || []);
         setEnvironments(envs || []);
+        setRequestsHydrated(true);
+      } else {
+        setRequests([]);
+        setRequestsHydrated(true);
       }
     } catch (err) {
       console.error(err);
+      setRequestsHydrated(true);
     }
   };
 
