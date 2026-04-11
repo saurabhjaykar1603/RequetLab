@@ -1,4 +1,4 @@
-import { getQuery, runQuery } from '../db';
+import { getQuery, runQuery } from '../db.ts';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface ActivityLog {

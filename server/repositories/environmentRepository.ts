@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { Environment } from '../interfaces/environment/Environment.ts';
-import { logActivity } from './activityRepository';
+import { logActivity } from './activityRepository.ts';
 
 export const getAllEnvironments = async (workspaceId: string): Promise<Environment[]> => {
   return await getQuery<Environment>('SELECT * FROM environments WHERE "workspaceId" = $1 ORDER BY "createdAt" DESC', [workspaceId]);

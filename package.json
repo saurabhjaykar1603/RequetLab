@@ -1,0 +1,19 @@
+{
+  "name": "requestlab",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "prepare": "husky",
+    "lint:client": "npm --prefix client run lint",
+    "typecheck:server": "npm --prefix server run build:server",
+    "test:server": "npm --prefix server run test",
+    "test:server:coverage": "npm --prefix server run test:coverage",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build:server",
+    "check": "npm run typecheck:server && npm run test:server",
+    "verify": "npm run check && npm run build:client"
+  },
+  "devDependencies": {
+    "husky": "^9.1.7"
+  }
+}

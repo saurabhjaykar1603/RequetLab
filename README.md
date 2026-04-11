@@ -2,6 +2,16 @@
 
 A feature-rich API client inspired by Postman, built with React and Fastify.
 
+Backend-specific documentation now lives here:
+
+- [Server README](/Users/saurabh/Desktop/RequetLab/server/README.md)
+- [Backend Testing Phases](/Users/saurabh/Desktop/RequetLab/docs/backend-testing-phases.md)
+
+Root quality commands:
+
+- `npm run check`
+- `npm run verify`
+
 ## Project Structure
 
 - `client/`: React frontend built with Vite.

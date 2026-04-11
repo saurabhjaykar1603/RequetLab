@@ -1,7 +1,7 @@
 import pg from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config();
+dotenv.config({ quiet: process.env.NODE_ENV === 'test' });
 
 const { Pool } = pg;
 
@@ -13,11 +13,13 @@ const poolConfig = {
   database: (process.env.DB_NAME || 'requestlab').replace(/"/g, ''),
 };
 
-console.log(`Connecting to PostgreSQL with config: host=${poolConfig.host}, port=${poolConfig.port}, user=${poolConfig.user}, database=${poolConfig.database}`);
+if (process.env.NODE_ENV !== 'test') {
+  console.log(`Connecting to PostgreSQL with config: host=${poolConfig.host}, port=${poolConfig.port}, user=${poolConfig.user}, database=${poolConfig.database}`);
+}
 
 const pool = new Pool(poolConfig);
 
-const initializeDb = async () => {
+const initializeDbInternal = async () => {
   // 1. Connect to default 'postgres' database to check/create the target database
   const adminConfig = { ...poolConfig, database: 'postgres' };
   const adminPool = new Pool(adminConfig);
@@ -181,7 +183,18 @@ const initializeDb = async () => {
   }
 };
 
-initializeDb();
+let dbInitializationPromise: Promise<void> | null = null;
+
+export const initializeDb = async () => {
+  if (!dbInitializationPromise) {
+    dbInitializationPromise = initializeDbInternal().catch((error) => {
+      dbInitializationPromise = null;
+      throw error;
+    });
+  }
+
+  await dbInitializationPromise;
+};
 
 export const runQuery = async (sql: string, params: any[] = []): Promise<any> => {
   const result = await pool.query(sql, params);

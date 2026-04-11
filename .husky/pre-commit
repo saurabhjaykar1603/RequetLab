@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+echo "Running RequestLab pre-commit checks..."
+npm run check

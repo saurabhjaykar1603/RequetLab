@@ -1,0 +1,4 @@
+version: 1
+display_name: RequestLab Backend Workflow
+short_description: Maintains RequestLab backend docs, hooks, and testing workflow.
+default_prompt: Update the RequestLab backend using the documented route/controller/repository structure, keep server docs in sync, and follow the phased testing workflow.

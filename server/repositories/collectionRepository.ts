@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { Collection } from '../interfaces/collection/Collection.ts';
-import { logActivity } from './activityRepository';
+import { logActivity } from './activityRepository.ts';
 
 export const getAllCollections = async (workspaceId?: string): Promise<Collection[]> => {
   if (workspaceId) {

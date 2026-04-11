@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+
+echo "Commit created. Recommended follow-up:"
+echo "npm run verify"

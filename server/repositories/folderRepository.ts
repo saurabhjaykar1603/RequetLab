@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { Folder } from '../interfaces/folder/Folder.ts';
-import { logActivity } from './activityRepository';
+import { logActivity } from './activityRepository.ts';
 import { Collection } from '../interfaces/collection/Collection.ts';
 
 export const getAllFolders = async (workspaceId?: string): Promise<Folder[]> => {

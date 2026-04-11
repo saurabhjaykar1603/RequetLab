@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { runQuery, getQuery, getSingleQuery } from '../db.ts';
 import { RequestEntity } from '../interfaces/request/Request.ts';
-import { logActivity } from './activityRepository';
+import { logActivity } from './activityRepository.ts';
 import { Collection } from '../interfaces/collection/Collection.ts';
 
 export const getAllRequests = async (workspaceId?: string): Promise<RequestEntity[]> => {

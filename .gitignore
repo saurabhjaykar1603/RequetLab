@@ -4,6 +4,7 @@
 node_modules/
 dist/
 *.log
+coverage/
 
 # Workspace
 .vscode/

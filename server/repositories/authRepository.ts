@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { getSingleQuery, runQuery } from '../db.ts';
 import { User } from '../interfaces/user/User.ts';
-import { logActivity } from './activityRepository';
+import { logActivity } from './activityRepository.ts';
 
 export const createUser = async (name: string, email: string, passwordHash: string): Promise<User> => {
   const id = uuidv4();
