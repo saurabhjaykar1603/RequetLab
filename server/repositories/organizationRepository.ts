@@ -23,6 +23,11 @@ export const findOrganizationById = async (id: string): Promise<Organization | u
   return await getSingleQuery<Organization>(sql, [id]);
 };
 
+export const findOrganizationByOwnerId = async (ownerId: string): Promise<Organization | undefined> => {
+  const sql = 'SELECT * FROM organizations WHERE "ownerId" = $1 ORDER BY "createdAt" ASC LIMIT 1';
+  return await getSingleQuery<Organization>(sql, [ownerId]);
+};
+
 export const getUserOrganizations = async (userId: string): Promise<Array<Organization & { role: string; memberCount: number }>> => {
   const sql = `
     SELECT o.*, om.role, COUNT(all_members."userId")::int AS "memberCount"

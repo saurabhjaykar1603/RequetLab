@@ -45,6 +45,12 @@ export default function ProfilePage({ user, onUserChange }) {
     return organizationMembers[selectedOrgId] || [];
   }, [organizationMembers, selectedOrgId]);
 
+  const ownedOrganization = useMemo(() => {
+    return organizations.find((organization) => organization.ownerId === user?.id);
+  }, [organizations, user?.id]);
+
+  const canCreateOrganization = !ownedOrganization;
+
   const loadPageData = async () => {
     if (!user) return;
 
@@ -65,7 +71,8 @@ export default function ProfilePage({ user, onUserChange }) {
       if (Array.isArray(orgRes)) {
         setOrganizations(orgRes);
         if (orgRes.length > 0) {
-          setSelectedOrgId((prev) => prev || orgRes[0].id);
+          const defaultOrganization = orgRes.find((organization) => organization.ownerId === user.id) || orgRes[0];
+          setSelectedOrgId((prev) => prev || defaultOrganization.id);
         }
       }
     } catch (error) {
@@ -133,6 +140,12 @@ export default function ProfilePage({ user, onUserChange }) {
 
   const handleCreateOrganization = async (event) => {
     event.preventDefault();
+
+    if (!canCreateOrganization) {
+      showToast({ message: 'You can create only one organization per account', type: 'error' });
+      return;
+    }
+
     setIsCreatingOrg(true);
 
     try {
@@ -278,13 +291,14 @@ export default function ProfilePage({ user, onUserChange }) {
               <Building2 size={14} /> Team Management
             </span>
           </div>
-          <p>Create organizations, select a plan, and assign users by email.</p>
+          <p>Create one organization, select a plan, and assign users by email.</p>
 
           <form onSubmit={handleCreateOrganization} className="settings-inline-form">
             <div className="form-group">
               <label>Organization Name</label>
               <input
                 required
+                disabled={!canCreateOrganization}
                 value={newOrgName}
                 onChange={(event) => setNewOrgName(event.target.value)}
                 placeholder="Acme Platform Team"
@@ -292,7 +306,11 @@ export default function ProfilePage({ user, onUserChange }) {
             </div>
             <div className="form-group">
               <label>Plan</label>
-              <select value={newOrgPlan} onChange={(event) => setNewOrgPlan(event.target.value)}>
+              <select
+                disabled={!canCreateOrganization}
+                value={newOrgPlan}
+                onChange={(event) => setNewOrgPlan(event.target.value)}
+              >
                 {planOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.label}
@@ -300,10 +318,18 @@ export default function ProfilePage({ user, onUserChange }) {
                 ))}
               </select>
             </div>
-            <button type="submit" className="btn-primary" disabled={isCreatingOrg || isLoading}>
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isCreatingOrg || isLoading || !canCreateOrganization}
+            >
               {isCreatingOrg ? 'Creating...' : 'Create Team'}
             </button>
           </form>
+
+          {!canCreateOrganization && (
+            <p className="muted">You already own an organization. Only one organization can be created per account.</p>
+          )}
 
           {organizations.length > 0 && (
             <div className="organization-selector-row">

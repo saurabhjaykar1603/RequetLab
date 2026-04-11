@@ -7,6 +7,7 @@ vi.mock('../../repositories/organizationRepository.ts', () => ({
   countOrganizationMembers: vi.fn(),
   createOrganization: vi.fn(),
   findOrganizationById: vi.fn(),
+  findOrganizationByOwnerId: vi.fn(),
   getOrganizationMemberRole: vi.fn(),
   getOrganizationMembers: vi.fn(),
   getPlanSeatLimit: vi.fn(),
@@ -42,6 +43,7 @@ describe('organization routes', () => {
       if (plan === 'business') return 25;
       return 3;
     });
+    vi.mocked(organizationRepository.findOrganizationByOwnerId).mockResolvedValue(undefined as any);
   });
 
   afterEach(async () => {
@@ -86,6 +88,32 @@ describe('organization routes', () => {
       memberCount: 1,
       role: 'admin',
     });
+  });
+
+  it('prevents creating more than one organization for the same owner', async () => {
+    vi.mocked(organizationRepository.findOrganizationByOwnerId).mockResolvedValue({
+      id: 'org-1',
+      ownerId: 'user-1',
+      name: 'Existing Org',
+      plan: 'free',
+    } as any);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/api/organizations',
+      headers: {
+        cookie: createAuthCookie(),
+      },
+      payload: {
+        name: 'Second Org',
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json()).toEqual({
+      error: 'You can create only one organization per account',
+    });
+    expect(organizationRepository.createOrganization).not.toHaveBeenCalled();
   });
 
   it('blocks member assignment when requester is not an admin', async () => {

@@ -229,6 +229,10 @@ Workspace note:
 - `POST /api/organizations/:id/members`
 - `PATCH /api/organizations/:id/plan`
 
+Organization note:
+
+- each owner account can create only one organization
+
 ### Collections
 
 - `GET /api/collections`

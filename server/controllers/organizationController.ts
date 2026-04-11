@@ -19,6 +19,13 @@ export const createOrganization = async (
       return reply.status(400).send({ error: 'Organization name is required' });
     }
 
+    const existingOwnedOrganization = await organizationRepository.findOrganizationByOwnerId(userId);
+    if (existingOwnedOrganization) {
+      return reply.status(400).send({
+        error: 'You can create only one organization per account',
+      });
+    }
+
     const selectedPlan = plan && isValidPlan(plan) ? plan : 'free';
     const organization = await organizationRepository.createOrganization(name.trim(), userId, selectedPlan);
 
