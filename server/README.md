@@ -48,7 +48,7 @@ The backend reads from `server/.env` during local development. The current code 
 
 Important variables:
 
-- `PORT`: server port, default `3001`
+- `PORT`: server port, default `5000`
 - `JWT_SECRET`: JWT signing secret; if missing the code falls back to `supersecret`
 - `DB_HOST` or `PG_HOST_DEV`
 - `DB_PORT` or `PG_PORT_DEV`
@@ -60,7 +60,7 @@ Important variables:
 Recommended local `server/.env`:
 
 ```env
-PORT=3001
+PORT=5000
 JWT_SECRET=replace-this-in-real-environments
 DB_HOST=localhost
 DB_PORT=5432
@@ -93,8 +93,8 @@ What this does:
 
 Default local URLs:
 
-- Frontend: `http://localhost:5173`
-- API server: `http://localhost:3001`
+- Frontend: `http://localhost:3000`
+- API server: `http://localhost:5000`
 
 ## Production Flow
 

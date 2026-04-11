@@ -8,6 +8,7 @@ export default fp(async (fastify: FastifyInstance) => {
   fastify.decorate('authenticate', async (request: FastifyRequest, reply: FastifyReply) => {
     try {
       const token = request.cookies.token;
+
       if (!token) {
         throw new Error('No token provided');
       }

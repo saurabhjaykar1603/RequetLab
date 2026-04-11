@@ -27,7 +27,7 @@ COPY --from=server-builder /app/server /app/server
 COPY --from=client-builder /app/client/dist /app/client/dist
 
 # Expose the application port
-EXPOSE 3001
+EXPOSE 5000
 
 # Set the environment and start the application
 WORKDIR /app/server

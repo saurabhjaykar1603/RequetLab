@@ -57,6 +57,32 @@ export default function App() {
 
   useEffect(() => {
     api.onUnauthorized = () => handleLogout('Your session has expired. Please log in again.');
+    
+    // Handle Google Auth Callback
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('auth') === 'success') {
+      const initAuth = async () => {
+        console.log('Google Auth success detected, fetching profile...');
+        try {
+          const res = await api.getMe();
+          console.log('Profile response:', res);
+          if (res.error) throw new Error(res.error);
+          
+          localStorage.setItem('user', JSON.stringify(res.user));
+          setUser(res.user);
+          
+          // Clear URL params
+          window.history.replaceState({}, document.title, window.location.pathname);
+          showToast({ message: 'Welcome to RequestLab!', type: 'success' });
+        } catch (err) {
+          console.error('initAuth failure:', err);
+          showToast({ message: 'Authentication failed', type: 'error' });
+          navigate('/login');
+        }
+      };
+      initAuth();
+    }
+    
     return () => { api.onUnauthorized = null; };
   }, []);
 
