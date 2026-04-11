@@ -1,90 +1,63 @@
 # RequestLab
 
-A feature-rich API client inspired by Postman, built with React and Fastify.
+RequestLab is a full-stack API workspace with a SaaS-style product flow:
 
-Backend-specific documentation now lives here:
+- public home + pricing pages
+- authentication and profile settings
+- personal/team workspaces for API requests
 
-- [Server README](/Users/saurabh/Desktop/RequetLab/server/README.md)
-- [Backend Testing Phases](/Users/saurabh/Desktop/RequetLab/docs/backend-testing-phases.md)
+## Product Features
 
-Root quality commands:
-
-- `npm run check`
-- `npm run verify`
+- API client experience (collections, folders, requests, environments, activity log)
+- Pricing model with two plans:
+  - `Free`
+  - `Business`
+- User profile update flow
 
 ## Project Structure
 
-- `client/`: React frontend built with Vite.
-- `server/`: Fastify backend with PostgreSQL storage.
+- `client/`: React + Vite frontend
+- `server/`: Fastify + TypeScript backend
+- `docs/`: implementation and backend testing docs
 
-## Getting Started
+## Documentation
 
-### Prerequisites
+- [Server README](/Users/sj/Desktop/RequestLab/server/README.md)
+- [Implementation README](/Users/sj/Desktop/RequestLab/docs/implementation-readme.md)
+- [Backend Testing Phases](/Users/sj/Desktop/RequestLab/docs/backend-testing-phases.md)
 
-- Node.js (v18+)
-- npm
-- PostgreSQL
+## Quick Start
 
-### Installation
+1. Install dependencies:
 
-1. Clone the repository.
-2. Install dependencies for both client and server:
-   ```bash
-   # From the root directory
-   cd client && npm install
-   cd ../server && npm install
-   ```
-3. Set up environment variables:
-   - Copy `server/.env.sample` to `server/.env` and update the values.
-   - Copy `client/.env.sample` to `client/.env` and update the values.
+```bash
+cd client && npm install
+cd ../server && npm install
+```
 
-## Development
+2. Configure env files (`client/.env`, `server/.env`) based on samples.
 
-To run both the frontend and backend in development mode with hot-reloading:
+3. Start development from `server/`:
 
 ```bash
 cd server
 npm run dev
 ```
 
-The frontend will be available at `http://localhost:3000` and the backend at `http://localhost:5000`.
+Frontend: `http://localhost:3000`
+Backend: `http://localhost:5000`
 
-## Production & Hosting
+## Quality Commands
 
-The project is configured for full-stack hosting, where the Fastify server serves the built React application.
+From repo root:
 
-### 1. Build the project
-This command builds the React client and prepares the server:
+- `npm run check`
+- `npm run verify`
+
+## Docker
+
+Run the full stack (app + postgres):
+
 ```bash
-cd server
-npm run build
+docker compose up --build
 ```
-
-### 2. Run in Production
-This command runs the server in production mode, serving the static files from `client/dist`:
-```bash
-cd server
-npm run prod
-```
-
-The entire application will be accessible at `http://localhost:5000` (or your configured `PORT`).
-
-## Running with Docker
-
-You can run the entire stack (client, server, and database) using Docker Compose.
-
-### Instructions
-
-1. **Build and Start**:
-   ```bash
-   docker compose up --build
-   ```
-
-2. **Access the App**:
-   The application will be available at `http://localhost:5000`.
-
-*Note: The database state is persisted in a Docker volume named `postgres_data`.*
-
-## License
-
-ISC

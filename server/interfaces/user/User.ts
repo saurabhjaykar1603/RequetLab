@@ -5,6 +5,9 @@ export interface User {
   password?: string;
   googleId?: string;
   avatarUrl?: string;
+  jobTitle?: string;
+  company?: string;
+  bio?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }

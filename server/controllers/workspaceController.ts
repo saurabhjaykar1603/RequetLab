@@ -2,11 +2,15 @@ import { FastifyRequest, FastifyReply } from 'fastify';
 import * as workspaceRepository from '../repositories/workspaceRepository.ts';
 import * as authRepository from '../repositories/authRepository.ts';
 
-export const createWorkspace = async (request: FastifyRequest<{ Body: { name: string; type?: 'personal' | 'team' } }>, reply: FastifyReply) => {
+export const createWorkspace = async (
+  request: FastifyRequest<{ Body: { name: string; type?: 'personal' | 'team'; plan?: 'free' | 'business' } }>,
+  reply: FastifyReply
+) => {
   try {
-    const { name, type } = request.body;
+    const { name, type, plan } = request.body;
     const userId = (request as any).user.id; 
-    const workspace = await workspaceRepository.createWorkspace(name, userId, type);
+    const selectedPlan = plan && ['free', 'business'].includes(plan) ? plan : 'free';
+    const workspace = await workspaceRepository.createWorkspace(name, userId, type, selectedPlan);
     return reply.status(201).send(workspace);
   } catch (error: any) {
     return reply.status(500).send({ error: error.message });

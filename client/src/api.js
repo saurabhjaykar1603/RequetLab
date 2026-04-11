@@ -7,10 +7,6 @@ const getHeaders = () => {
   return headers;
 };
 
-const getPostHeaders = () => {
-  return { ...getHeaders(), 'Content-Type': 'application/json' };
-};
-
 const request = async (url, options = {}) => {
   const res = await fetch(url, {
     ...options,
@@ -57,16 +53,23 @@ export const api = {
   getMe: async () => {
     return request(`${BASE_URL}/auth/me`);
   },
+  updateProfile: async (profile) => {
+    return request(`${BASE_URL}/auth/profile`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(profile)
+    });
+  },
 
   // Workspaces
   getWorkspaces: async () => {
     return request(`${BASE_URL}/workspaces`);
   },
-  createWorkspace: async (name, type = 'personal') => {
+  createWorkspace: async (name, type = 'personal', plan = 'free') => {
     return request(`${BASE_URL}/workspaces`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, type })
+      body: JSON.stringify({ name, type, plan })
     });
   },
   deleteWorkspace: async (id) => {

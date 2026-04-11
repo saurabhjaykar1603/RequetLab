@@ -55,6 +55,9 @@ const initializeDbInternal = async () => {
       password TEXT, -- Nullable for Google users
       "googleId" TEXT UNIQUE,
       "avatarUrl" TEXT,
+      "jobTitle" TEXT,
+      company TEXT,
+      bio TEXT,
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
@@ -73,6 +76,18 @@ const initializeDbInternal = async () => {
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='avatarUrl') THEN
           ALTER TABLE users ADD COLUMN "avatarUrl" TEXT;
         END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='jobTitle') THEN
+          ALTER TABLE users ADD COLUMN "jobTitle" TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='company') THEN
+          ALTER TABLE users ADD COLUMN company TEXT;
+        END IF;
+
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='bio') THEN
+          ALTER TABLE users ADD COLUMN bio TEXT;
+        END IF;
       END $$;
     `);
 
@@ -82,9 +97,20 @@ const initializeDbInternal = async () => {
       name TEXT NOT NULL,
       "ownerId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
       type TEXT DEFAULT 'personal', -- 'personal' or 'team'
+      plan TEXT DEFAULT 'free', -- 'free' or 'business'
       "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )`);
+
+    await client.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='workspaces' AND column_name='plan') THEN
+          ALTER TABLE workspaces ADD COLUMN plan TEXT DEFAULT 'free';
+        END IF;
+      END $$;
+    `);
+    await client.query(`UPDATE workspaces SET plan = 'free' WHERE plan IS NULL OR plan = '' OR plan NOT IN ('free', 'business')`);
 
     // Workspace Members Table (for team workspaces)
     await client.query(`CREATE TABLE IF NOT EXISTS workspace_members (

@@ -4,10 +4,15 @@ import { Workspace } from '../interfaces/workspace/Workspace.ts';
 import { logActivity } from './activityRepository.ts';
 import * as authRepository from './authRepository.ts';
 
-export const createWorkspace = async (name: string, ownerId: string, type: 'personal' | 'team' = 'personal'): Promise<Workspace> => {
+export const createWorkspace = async (
+  name: string,
+  ownerId: string,
+  type: 'personal' | 'team' = 'personal',
+  plan: 'free' | 'business' = 'free'
+): Promise<Workspace> => {
   const id = uuidv4();
-  const sql = 'INSERT INTO workspaces (id, name, "ownerId", type) VALUES ($1, $2, $3, $4) RETURNING *';
-  const res = await runQuery(sql, [id, name, ownerId, type]);
+  const sql = 'INSERT INTO workspaces (id, name, "ownerId", type, plan) VALUES ($1, $2, $3, $4, $5) RETURNING *';
+  const res = await runQuery(sql, [id, name, ownerId, type, plan]);
   
   // Also add owner as member
   await addMemberToWorkspace(id, ownerId, 'admin');

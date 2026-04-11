@@ -217,13 +217,24 @@ const Modals = ({
                 </div>
                  <div className="form-group">
                   <label>Type</label>
-                  <CustomSelect 
+                 <CustomSelect 
                     options={[
                       { value: 'personal', label: 'Personal' },
                       { value: 'team', label: 'Team' }
                     ]}
                     value={modalData.workspaceType || 'personal'}
                     onChange={val => setModalData({...modalData, workspaceType: val})}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Plan</label>
+                  <CustomSelect
+                    options={[
+                      { value: 'free', label: 'Free (up to 3 seats)' },
+                      { value: 'business', label: 'Business (up to 25 seats)' }
+                    ]}
+                    value={modalData.workspacePlan || 'free'}
+                    onChange={val => setModalData({...modalData, workspacePlan: val})}
                   />
                 </div>
               </div>

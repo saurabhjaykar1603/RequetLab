@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import { api } from './api';
 import { useToast } from 'toast-ninja';
@@ -6,36 +6,72 @@ import Login from './components/auth/Login';
 import Signup from './components/auth/Signup';
 import Dashboard from './components/dashboard/Dashboard';
 import Modals from './components/dashboard/Modals';
+import HomePage from './components/marketing/HomePage';
+import PricingPage from './components/marketing/PricingPage';
+import ProfilePage from './components/settings/ProfilePage';
 import { generateCurl, parseCurl } from './utils/curlUtils';
 import { resolveRequestVariables } from './utils/variableUtils';
 import './index.css';
 
-// Helpers
-const parseJSONStr = (str, fallback) => {
-  try { return JSON.parse(str); } catch (e) { return fallback; }
+const UI_STATE_KEY = 'requestlabUiStateV1';
+
+const readUiState = () => {
+  try {
+    const raw = localStorage.getItem(UI_STATE_KEY);
+    if (!raw) {
+      return { global: {}, workspaces: {} };
+    }
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object') {
+      return { global: {}, workspaces: {} };
+    }
+    return {
+      global: parsed.global && typeof parsed.global === 'object' ? parsed.global : {},
+      workspaces: parsed.workspaces && typeof parsed.workspaces === 'object' ? parsed.workspaces : {},
+    };
+  } catch {
+    return { global: {}, workspaces: {} };
+  }
+};
+
+const writeUiState = (state) => {
+  localStorage.setItem(UI_STATE_KEY, JSON.stringify(state));
+};
+
+const areObjectsEqual = (first, second) => {
+  try {
+    return JSON.stringify(first) === JSON.stringify(second);
+  } catch {
+    return false;
+  }
 };
 
 export default function App() {
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const persistedUiState = useMemo(() => readUiState(), []);
+  const persistedGlobalUi = persistedUiState.global || {};
   const [collections, setCollections] = useState([]);
   const [folders, setFolders] = useState([]);
   const [requests, setRequests] = useState([]);
   const [environments, setEnvironments] = useState([]);
 
-  const [activeTab, setActiveTab] = useState('collections');
+  const [activeTab, setActiveTab] = useState(() => persistedGlobalUi.activeTab || 'collections');
   const [expanded, setExpanded] = useState({});
-  const [activeRequest, setActiveRequest] = useState(null);
+  const [activeRequest, setActiveRequestState] = useState(null);
+  const [activeRequestId, setActiveRequestId] = useState(null);
+  const [requestDrafts, setRequestDrafts] = useState({});
+  const [requestsHydrated, setRequestsHydrated] = useState(false);
   const [activeEnvId, setActiveEnvId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const [editorTab, setEditorTab] = useState('params');
+  const [editorTab, setEditorTab] = useState(() => persistedGlobalUi.editorTab || 'params');
   const [response, setResponse] = useState(null);
   const [isSending, setIsSending] = useState(false);
 
   const [modalOpen, setModalOpen] = useState(null);
   const [modalData, setModalData] = useState({});
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(() => persistedGlobalUi.theme || 'dark');
 
   const [user, setUser] = useState(() => JSON.parse(localStorage.getItem('user') || 'null'));
   const [workspaces, setWorkspaces] = useState([]);
@@ -54,6 +90,119 @@ export default function App() {
 
   const [draggedItem, setDraggedItem] = useState(null);
   const [dragOverId, setDragOverId] = useState(null);
+  const skipNextWorkspacePersistRef = useRef(false);
+
+  const setActiveRequest = (valueOrUpdater) => {
+    setActiveRequestState((prev) => {
+      const next = typeof valueOrUpdater === 'function' ? valueOrUpdater(prev) : valueOrUpdater;
+      setActiveRequestId(next?.id || null);
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    skipNextWorkspacePersistRef.current = true;
+    setRequestsHydrated(false);
+    const savedUi = readUiState();
+    const workspaceUi = activeWorkspaceId ? savedUi.workspaces?.[activeWorkspaceId] : null;
+
+    setExpanded(workspaceUi?.expanded && typeof workspaceUi.expanded === 'object' ? workspaceUi.expanded : {});
+    setSearchQuery(typeof workspaceUi?.searchQuery === 'string' ? workspaceUi.searchQuery : '');
+    setActiveEnvId(typeof workspaceUi?.activeEnvId === 'string' ? workspaceUi.activeEnvId : '');
+    setActiveRequestId(typeof workspaceUi?.activeRequestId === 'string' ? workspaceUi.activeRequestId : null);
+    setRequestDrafts(workspaceUi?.requestDrafts && typeof workspaceUi.requestDrafts === 'object' ? workspaceUi.requestDrafts : {});
+    setActiveRequestState(null);
+    setResponse(null);
+  }, [activeWorkspaceId]);
+
+  useEffect(() => {
+    if (!activeRequestId) {
+      return;
+    }
+    if (!requestsHydrated) {
+      return;
+    }
+
+    const requestFromList = requests.find((request) => request.id === activeRequestId);
+    if (!requestFromList) {
+      setRequestDrafts((prevDrafts) => {
+        if (!prevDrafts[activeRequestId]) return prevDrafts;
+        const nextDrafts = { ...prevDrafts };
+        delete nextDrafts[activeRequestId];
+        return nextDrafts;
+      });
+      setActiveRequestState(null);
+      setActiveRequestId(null);
+      return;
+    }
+
+    const draftForRequest = requestDrafts[activeRequestId];
+
+    setActiveRequestState((prev) => {
+      const mergedFromDraft = draftForRequest ? { ...requestFromList, ...draftForRequest } : null;
+      if (prev?.id === requestFromList.id) {
+        const candidate = mergedFromDraft || { ...requestFromList, ...prev };
+        if (areObjectsEqual(prev, candidate)) {
+          return prev;
+        }
+        return candidate;
+      }
+      const candidate = mergedFromDraft || requestFromList;
+      return candidate;
+    });
+  }, [requests, activeRequestId, requestsHydrated]);
+
+  useEffect(() => {
+    if (!activeRequest?.id) {
+      return;
+    }
+
+    setRequestDrafts((prevDrafts) => {
+      if (areObjectsEqual(prevDrafts[activeRequest.id], activeRequest)) {
+        return prevDrafts;
+      }
+
+      return {
+        ...prevDrafts,
+        [activeRequest.id]: activeRequest,
+      };
+    });
+  }, [activeRequest]);
+
+  useEffect(() => {
+    if (!user) return;
+    if (skipNextWorkspacePersistRef.current) {
+      skipNextWorkspacePersistRef.current = false;
+      return;
+    }
+
+    const savedUi = readUiState();
+    const nextUiState = {
+      ...savedUi,
+      global: {
+        ...savedUi.global,
+        activeTab,
+        editorTab,
+        theme,
+      },
+      workspaces: {
+        ...savedUi.workspaces,
+        ...(activeWorkspaceId
+          ? {
+              [activeWorkspaceId]: {
+                expanded,
+                searchQuery,
+                activeEnvId,
+                activeRequestId,
+                requestDrafts,
+              },
+            }
+          : {}),
+      },
+    };
+
+    writeUiState(nextUiState);
+  }, [user, activeTab, editorTab, theme, activeWorkspaceId, expanded, searchQuery, activeEnvId, activeRequestId, requestDrafts]);
 
   useEffect(() => {
     api.onUnauthorized = () => handleLogout('Your session has expired. Please log in again.');
@@ -113,9 +262,14 @@ export default function App() {
         setFolders(flds || []);
         setRequests(reqs || []);
         setEnvironments(envs || []);
+        setRequestsHydrated(true);
+      } else {
+        setRequests([]);
+        setRequestsHydrated(true);
       }
     } catch (err) {
       console.error(err);
+      setRequestsHydrated(true);
     }
   };
 
@@ -155,7 +309,11 @@ export default function App() {
   const handleCreateWorkspace = async (e) => {
     e.preventDefault();
     try {
-      const res = await api.createWorkspace(modalData.workspaceName, modalData.workspaceType || 'personal');
+      const res = await api.createWorkspace(
+        modalData.workspaceName,
+        modalData.workspaceType || 'personal',
+        modalData.workspacePlan || 'free'
+      );
       if (res.error) throw new Error(res.error);
       setModalOpen(null);
       setModalData({});
@@ -503,6 +661,12 @@ export default function App() {
   const handleSaveRequest = async () => {
     if (!activeRequest) return;
     await api.updateRequest(activeRequest.id, activeRequest);
+    setRequestDrafts((prevDrafts) => {
+      if (!prevDrafts[activeRequest.id]) return prevDrafts;
+      const nextDrafts = { ...prevDrafts };
+      delete nextDrafts[activeRequest.id];
+      return nextDrafts;
+    });
     loadData();
     showToast({ message: 'Request saved', type: 'success' });
   };
@@ -859,9 +1023,12 @@ export default function App() {
 
   return (
     <Routes>
-      <Route path="/login" element={!user ? <Login onLoginSuccess={setUser} /> : <Navigate to="/" />} />
-      <Route path="/signup" element={!user ? <Signup onSignupSuccess={setUser} /> : <Navigate to="/" />} />
-      <Route path="/" element={user ? (
+      <Route path="/" element={<HomePage user={user} />} />
+      <Route path="/pricing" element={<PricingPage user={user} />} />
+      <Route path="/login" element={!user ? <Login onLoginSuccess={setUser} /> : <Navigate to="/app" />} />
+      <Route path="/signup" element={!user ? <Signup onSignupSuccess={setUser} /> : <Navigate to="/app" />} />
+      <Route path="/profile" element={user ? <ProfilePage user={user} onUserChange={setUser} /> : <Navigate to="/login" />} />
+      <Route path="/app" element={user ? (
         <>
           <Dashboard
             user={user}
@@ -900,6 +1067,9 @@ export default function App() {
             theme={theme}
             setTheme={setTheme}
             handleLogout={handleLogout}
+            goToHome={() => navigate('/')}
+            goToPricing={() => navigate('/pricing')}
+            goToProfile={() => navigate('/profile')}
             handleSaveRequest={handleSaveRequest}
             handleCopyAsCurl={handleCopyAsCurl}
             handleUrlPaste={handleUrlPaste}
@@ -941,7 +1111,7 @@ export default function App() {
           />
         </>
       ) : <Navigate to="/login" />} />
-      <Route path="*" element={<Navigate to={user ? '/' : '/login'} replace />} />
+      <Route path="*" element={<Navigate to={user ? '/app' : '/'} replace />} />
     </Routes>
   );
 }

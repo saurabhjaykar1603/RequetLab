@@ -7,6 +7,7 @@ vi.mock('../../repositories/authRepository.ts', () => ({
   createUser: vi.fn(),
   findUserByEmail: vi.fn(),
   findUserById: vi.fn(),
+  updateUserProfile: vi.fn(),
 }));
 
 vi.mock('../../repositories/activityRepository.ts', () => ({
@@ -136,5 +137,45 @@ describe('auth routes', () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ success: true });
     expect(response.headers['set-cookie']).toContain('token=');
+  });
+
+  it('updates the authenticated user profile', async () => {
+    vi.mocked(authRepository.updateUserProfile).mockResolvedValue({
+      id: 'user-1',
+      name: 'Ada Lovelace',
+      email: 'ada@example.com',
+      jobTitle: 'Engineer',
+      company: 'RequestLab',
+      bio: 'Building API flows',
+      avatarUrl: 'https://example.com/avatar.png',
+    } as any);
+
+    const response = await app.inject({
+      method: 'PUT',
+      url: '/api/auth/profile',
+      headers: {
+        cookie: createAuthCookie(),
+      },
+      payload: {
+        name: 'Ada Lovelace',
+        jobTitle: 'Engineer',
+        company: 'RequestLab',
+        bio: 'Building API flows',
+        avatarUrl: 'https://example.com/avatar.png',
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({
+      user: {
+        id: 'user-1',
+        name: 'Ada Lovelace',
+        email: 'ada@example.com',
+        jobTitle: 'Engineer',
+        company: 'RequestLab',
+        bio: 'Building API flows',
+        avatarUrl: 'https://example.com/avatar.png',
+      },
+    });
   });
 });
