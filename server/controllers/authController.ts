@@ -51,7 +51,14 @@ export const login = async (request: FastifyRequest<{ Body: any }>, reply: Fasti
     }
 
     // Check password
-    const isMatch = await bcrypt.compare(password, user.password!);
+    if (!user.password) {
+      if (user.googleId) {
+        return reply.status(401).send({ error: 'This account uses Google Login. Please log in with Google.' });
+      }
+      return reply.status(401).send({ error: 'No password set for this account. Please use social login or reset your password.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return reply.status(401).send({ error: 'Invalid credentials' });
     }
