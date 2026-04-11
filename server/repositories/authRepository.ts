@@ -15,7 +15,7 @@ export const createUser = async (name: string, email: string, passwordHash?: str
 };
 
 export const findUserByEmail = async (email: string): Promise<User | undefined> => {
-  const sql = 'SELECT id, name, email, "googleId", "avatarUrl" FROM users WHERE email = $1';
+  const sql = 'SELECT id, name, email, password, "googleId", "avatarUrl" FROM users WHERE email = $1';
   return await getSingleQuery<User>(sql, [email]);
 };
 
