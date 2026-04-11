@@ -38,6 +38,14 @@ const writeUiState = (state) => {
   localStorage.setItem(UI_STATE_KEY, JSON.stringify(state));
 };
 
+const areObjectsEqual = (first, second) => {
+  try {
+    return JSON.stringify(first) === JSON.stringify(second);
+  } catch {
+    return false;
+  }
+};
+
 export default function App() {
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -52,6 +60,7 @@ export default function App() {
   const [expanded, setExpanded] = useState({});
   const [activeRequest, setActiveRequestState] = useState(null);
   const [activeRequestId, setActiveRequestId] = useState(null);
+  const [requestDrafts, setRequestDrafts] = useState({});
   const [activeEnvId, setActiveEnvId] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -99,6 +108,7 @@ export default function App() {
     setSearchQuery(typeof workspaceUi?.searchQuery === 'string' ? workspaceUi.searchQuery : '');
     setActiveEnvId(typeof workspaceUi?.activeEnvId === 'string' ? workspaceUi.activeEnvId : '');
     setActiveRequestId(typeof workspaceUi?.activeRequestId === 'string' ? workspaceUi.activeRequestId : null);
+    setRequestDrafts(workspaceUi?.requestDrafts && typeof workspaceUi.requestDrafts === 'object' ? workspaceUi.requestDrafts : {});
     setActiveRequestState(null);
     setResponse(null);
   }, [activeWorkspaceId]);
@@ -110,18 +120,49 @@ export default function App() {
 
     const requestFromList = requests.find((request) => request.id === activeRequestId);
     if (!requestFromList) {
+      setRequestDrafts((prevDrafts) => {
+        if (!prevDrafts[activeRequestId]) return prevDrafts;
+        const nextDrafts = { ...prevDrafts };
+        delete nextDrafts[activeRequestId];
+        return nextDrafts;
+      });
       setActiveRequestState(null);
       setActiveRequestId(null);
       return;
     }
 
+    const draftForRequest = requestDrafts[activeRequestId];
+
     setActiveRequestState((prev) => {
+      const mergedFromDraft = draftForRequest ? { ...requestFromList, ...draftForRequest } : null;
       if (prev?.id === requestFromList.id) {
-        return { ...requestFromList, ...prev };
+        const candidate = mergedFromDraft || { ...requestFromList, ...prev };
+        if (areObjectsEqual(prev, candidate)) {
+          return prev;
+        }
+        return candidate;
       }
-      return requestFromList;
+      const candidate = mergedFromDraft || requestFromList;
+      return candidate;
     });
   }, [requests, activeRequestId]);
+
+  useEffect(() => {
+    if (!activeRequest?.id) {
+      return;
+    }
+
+    setRequestDrafts((prevDrafts) => {
+      if (areObjectsEqual(prevDrafts[activeRequest.id], activeRequest)) {
+        return prevDrafts;
+      }
+
+      return {
+        ...prevDrafts,
+        [activeRequest.id]: activeRequest,
+      };
+    });
+  }, [activeRequest]);
 
   useEffect(() => {
     if (!user) return;
@@ -148,6 +189,7 @@ export default function App() {
                 searchQuery,
                 activeEnvId,
                 activeRequestId,
+                requestDrafts,
               },
             }
           : {}),
@@ -155,7 +197,7 @@ export default function App() {
     };
 
     writeUiState(nextUiState);
-  }, [user, activeTab, editorTab, theme, activeWorkspaceId, expanded, searchQuery, activeEnvId, activeRequestId]);
+  }, [user, activeTab, editorTab, theme, activeWorkspaceId, expanded, searchQuery, activeEnvId, activeRequestId, requestDrafts]);
 
   useEffect(() => {
     api.onUnauthorized = () => handleLogout('Your session has expired. Please log in again.');
@@ -609,6 +651,12 @@ export default function App() {
   const handleSaveRequest = async () => {
     if (!activeRequest) return;
     await api.updateRequest(activeRequest.id, activeRequest);
+    setRequestDrafts((prevDrafts) => {
+      if (!prevDrafts[activeRequest.id]) return prevDrafts;
+      const nextDrafts = { ...prevDrafts };
+      delete nextDrafts[activeRequest.id];
+      return nextDrafts;
+    });
     loadData();
     showToast({ message: 'Request saved', type: 'success' });
   };
