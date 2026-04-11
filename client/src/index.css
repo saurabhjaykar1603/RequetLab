@@ -1303,6 +1303,11 @@ body {
   gap: 14px;
 }
 
+.settings-content.profile-only {
+  max-width: 860px;
+  grid-template-columns: 1fr;
+}
+
 .settings-card {
   border: 1px solid var(--border-color);
   border-radius: 12px;

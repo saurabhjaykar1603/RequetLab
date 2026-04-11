@@ -8,11 +8,11 @@ const plans = [
     price: '$0',
     frequency: '/month',
     description: 'For common users and solo builders.',
-    seats: 3,
+    seats: 'Profile + core workspace',
     features: [
       'Personal workspaces',
-      'Create organization on free tier',
-      'Up to 3 organization members',
+      'Profile update settings',
+      'Core collaboration workflow',
       'Profile management',
     ],
   },
@@ -21,12 +21,11 @@ const plans = [
     icon: Crown,
     price: '$39',
     frequency: '/month',
-    description: 'For organizations shipping in teams.',
-    seats: 25,
+    description: 'For teams shipping in production.',
+    seats: 'Business collaboration features',
     features: [
       'Everything in Free',
-      'Up to 25 organization members',
-      'Plan upgrade controls in app',
+      'Plan controls in app',
       'Team-first collaboration setup',
     ],
   },
@@ -37,10 +36,10 @@ export default function PricingPage({ user }) {
     <div className="pricing-page-wrapper">
       <section className="pricing-page-hero">
         <span>Pricing Plans</span>
-        <h1>Simple pricing for users and organizations</h1>
+        <h1>Simple pricing for users and teams</h1>
         <p>
-          Choose a plan, create teams, and assign users inside organizations. Payment integration is intentionally
-          not required for this product flow.
+          Choose a plan and manage your profile inside the app. Payment integration is intentionally not required for
+          this product flow.
         </p>
       </section>
 
@@ -56,7 +55,7 @@ export default function PricingPage({ user }) {
               <span>{plan.frequency}</span>
             </div>
             <p className="pricing-subtitle">{plan.description}</p>
-            <p className="pricing-seats">Seat limit: {plan.seats} members</p>
+            <p className="pricing-seats">{plan.seats}</p>
             <ul>
               {plan.features.map((feature) => (
                 <li key={feature}>

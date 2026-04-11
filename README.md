@@ -5,7 +5,6 @@ RequestLab is a full-stack API workspace with a SaaS-style product flow:
 - public home + pricing pages
 - authentication and profile settings
 - personal/team workspaces for API requests
-- organization/team assignment with plan-based seat limits
 
 ## Product Features
 
@@ -13,10 +12,6 @@ RequestLab is a full-stack API workspace with a SaaS-style product flow:
 - Pricing model with two plans:
   - `Free`
   - `Business`
-- Organization management:
-  - create one organization per owner account
-  - assign users by email
-  - default plan is `Free`; switch to `Business` in-app (no payment integration)
 - User profile update flow
 
 ## Project Structure

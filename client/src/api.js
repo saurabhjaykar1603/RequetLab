@@ -110,35 +110,6 @@ export const api = {
     });
   },
 
-  // Organizations
-  getOrganizations: async () => {
-    return request(`${BASE_URL}/organizations`);
-  },
-  createOrganization: async (name, plan = 'free') => {
-    return request(`${BASE_URL}/organizations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, plan })
-    });
-  },
-  getOrganizationMembers: async (organizationId) => {
-    return request(`${BASE_URL}/organizations/${organizationId}/members`);
-  },
-  addOrganizationMember: async (organizationId, email, role = 'member') => {
-    return request(`${BASE_URL}/organizations/${organizationId}/members`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, role })
-    });
-  },
-  updateOrganizationPlan: async (organizationId, plan) => {
-    return request(`${BASE_URL}/organizations/${organizationId}/plan`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ plan })
-    });
-  },
-
   // Collections
   getCollections: async () => {
     return request(`${BASE_URL}/collections`);

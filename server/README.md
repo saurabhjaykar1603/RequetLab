@@ -4,7 +4,7 @@ This document describes the current backend in `server/` so you can maintain it,
 
 ## Overview
 
-The backend is a Fastify + TypeScript server with PostgreSQL persistence. It exposes authentication, profile management, workspace management, organization/team management with pricing plans, collections, folders, requests, environments, proxy execution, and activity logs.
+The backend is a Fastify + TypeScript server with PostgreSQL persistence. It exposes authentication, profile management, workspace management with pricing plans, collections, folders, requests, environments, proxy execution, and activity logs.
 
 At runtime the server also serves the built React app from `client/dist`, so production can run as a single process.
 
@@ -154,8 +154,6 @@ Current tables:
 - `requests`
 - `environments`
 - `workspace_invitations`
-- `organizations`
-- `organization_members`
 - `activity_logs`
 
 Important note:
@@ -221,20 +219,6 @@ Workspace note:
 
 - `POST /api/workspaces` supports `plan` (`free` or `business`) in addition to `type` (`personal` or `team`)
 
-### Organizations
-
-- `POST /api/organizations`
-- `GET /api/organizations`
-- `GET /api/organizations/:id/members`
-- `POST /api/organizations/:id/members`
-- `PATCH /api/organizations/:id/plan`
-
-Organization note:
-
-- each owner account can create only one organization
-- organization plan defaults to `free` and can be changed to `business`
-- duplicate historical organizations for the same owner are auto-cleaned (latest kept)
-
 ### Collections
 
 - `GET /api/collections`
@@ -297,7 +281,6 @@ Current event coverage includes:
 - user profile updates
 - workspace create, update, delete
 - workspace invite, accept, reject, remove member
-- organization create and plan update
 - collection create, update, delete
 - folder create, update, delete
 - request create, update, delete

@@ -22,7 +22,6 @@ import requestRoutes from './routes/requestRoutes.ts';
 import environmentRoutes from './routes/environmentRoutes.ts';
 import proxyRoutes from './routes/proxyRoutes.ts';
 import activityRoutes from './routes/activityRoutes.ts';
-import organizationRoutes from './routes/organizationRoutes.ts';
 
 dotenv.config({ quiet: process.env.NODE_ENV === 'test' });
 
@@ -82,7 +81,6 @@ export const buildApp = (options: BuildAppOptions = {}): FastifyInstance => {
   fastify.register(environmentRoutes, { prefix: '/api/environments' });
   fastify.register(proxyRoutes, { prefix: '/api/proxy' });
   fastify.register(activityRoutes, { prefix: '/api/activity' });
-  fastify.register(organizationRoutes, { prefix: '/api/organizations' });
 
   // Catch-all route to serve React's index.html for SPA routing
   fastify.setNotFoundHandler((request, reply) => {

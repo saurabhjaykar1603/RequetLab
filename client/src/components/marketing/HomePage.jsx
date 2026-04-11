@@ -9,8 +9,8 @@ const highlights = [
   },
   {
     icon: Users,
-    title: 'Organization-ready',
-    description: 'Create organizations, assign teammates, and manage seats by plan without payment setup.',
+    title: 'Team-ready profiles',
+    description: 'Keep user profiles updated and collaborate inside shared workspaces with clear plans.',
   },
   {
     icon: Layers3,
@@ -24,14 +24,14 @@ const plans = [
     name: 'Free',
     price: '$0',
     subtitle: 'Best for solo builders and personal projects.',
-    seats: 'Up to 3 organization members',
-    features: ['Core API workspace', 'Collections, folders, and environments', 'Basic organization setup'],
+    seats: 'Personal profile + core workspace',
+    features: ['Core API workspace', 'Collections, folders, and environments', 'Profile update settings'],
   },
   {
     name: 'Business',
     price: '$39',
     subtitle: 'Built for growing product and platform teams.',
-    seats: 'Up to 25 organization members',
+    seats: 'Advanced collaboration workflows',
     features: ['Everything in Free', 'Larger team seat capacity', 'Priority collaboration workflow'],
   },
 ];
@@ -41,7 +41,7 @@ export default function HomePage({ user }) {
     <div className="marketing-page">
       <section className="marketing-hero">
         <div className="marketing-badge">RequestLab SaaS Edition</div>
-        <h1>Collaborative API testing with profile, pricing, and organization controls.</h1>
+        <h1>Collaborative API testing with profile settings and clear pricing plans.</h1>
         <p>
           Build requests, manage teams, and move from personal usage to business-ready operations using the
           same product surface.

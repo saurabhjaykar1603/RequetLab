@@ -201,25 +201,6 @@ const initializeDbInternal = async () => {
       UNIQUE("workspaceId", "inviteeId", "status") -- Prevent duplicate pending invites
     )`);
 
-    // Organizations Table
-    await client.query(`CREATE TABLE IF NOT EXISTS organizations (
-      id TEXT PRIMARY KEY,
-      name TEXT NOT NULL,
-      "ownerId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      plan TEXT DEFAULT 'free', -- 'free' or 'business'
-      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )`);
-    await client.query(`UPDATE organizations SET plan = 'free' WHERE plan IS NULL OR plan = '' OR plan NOT IN ('free', 'business')`);
-
-    // Organization Members Table
-    await client.query(`CREATE TABLE IF NOT EXISTS organization_members (
-      "organizationId" TEXT NOT NULL REFERENCES organizations(id) ON DELETE CASCADE,
-      "userId" TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-      role TEXT DEFAULT 'member', -- 'admin' or 'member'
-      PRIMARY KEY ("organizationId", "userId")
-    )`);
-
     // Activity Logs Table
     await client.query(`CREATE TABLE IF NOT EXISTS activity_logs (
       id TEXT PRIMARY KEY,
@@ -236,7 +217,6 @@ const initializeDbInternal = async () => {
     // Create indexes for activity logs to ensure performance as the table grows
     await client.query('CREATE INDEX IF NOT EXISTS idx_activity_logs_workspace_id ON activity_logs ("workspaceId")');
     await client.query('CREATE INDEX IF NOT EXISTS idx_activity_logs_created_at ON activity_logs ("createdAt")');
-    await client.query('CREATE INDEX IF NOT EXISTS idx_org_members_user_id ON organization_members ("userId")');
 
     await client.query('COMMIT');
     console.log('PostgreSQL database and tables initialized.');
