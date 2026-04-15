@@ -95,10 +95,10 @@ const Dashboard = ({
           <House size={20} />
           <span>Home</span>
         </div>
-        <div className="nav-item" onClick={goToPricing}>
+        {/* <div className="nav-item" onClick={goToPricing}>
           <BadgeDollarSign size={20} />
           <span>Pricing</span>
-        </div>
+        </div> */}
         <div className="nav-item" onClick={goToProfile}>
           <UserRoundCog size={20} />
           <span>Profile</span>

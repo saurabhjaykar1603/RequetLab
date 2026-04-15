@@ -50,7 +50,7 @@ export default function HomePage({ user }) {
           <Link to={user ? '/app' : '/signup'} className="btn-primary marketing-cta">
             {user ? 'Open Dashboard' : 'Start Free'} <ArrowRight size={14} />
           </Link>
-          <Link to="/pricing" className="btn-secondary marketing-cta-secondary">View Pricing</Link>
+          {/* <Link to="/pricing" className="btn-secondary marketing-cta-secondary">View Pricing</Link> */}
         </div>
       </section>
 
@@ -64,7 +64,7 @@ export default function HomePage({ user }) {
         ))}
       </section>
 
-      <section className="marketing-pricing-preview">
+      {/* <section className="marketing-pricing-preview">
         <div className="marketing-section-head">
           <span>Pricing</span>
           <h2>Two clear plans. No payment integration required.</h2>
@@ -89,7 +89,7 @@ export default function HomePage({ user }) {
             </article>
           ))}
         </div>
-      </section>
+      </section> */}
     </div>
   );
 }
