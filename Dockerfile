@@ -32,4 +32,4 @@ EXPOSE 5000
 # Set the environment and start the application
 WORKDIR /app/server
 ENV NODE_ENV=production
-CMD ["npx", "tsx", "app.ts"]
+CMD ["npx", "tsx", "server.ts"]
